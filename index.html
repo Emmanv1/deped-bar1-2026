@@ -15,144 +15,87 @@
   --amber:#b45309;--amber-light:#fef3c7;
   --gray0:#f8f9fa;--gray1:#f1f3f5;--gray2:#e9ecef;--gray3:#dee2e6;
   --gray5:#adb5bd;--gray7:#495057;--gray9:#212529;
-  --white:#fff;
-  --font:'IBM Plex Sans',sans-serif;
-  --mono:'IBM Plex Mono',monospace;
+  --white:#fff;--font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--gray1);color:var(--gray9);font-size:14px;min-height:100vh}
-
-/* LOGIN */
 #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;
   background:linear-gradient(135deg,#0d2b6e 0%,#1a56db 60%,#2563eb 100%)}
-.login-card{background:#fff;border-radius:12px;padding:40px 36px;width:360px;
-  box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card{background:#fff;border-radius:12px;padding:40px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .login-logo{text-align:center;margin-bottom:24px}
-.login-logo .dep{font-size:26px;font-weight:700;color:#1a56db;letter-spacing:-0.5px}
+.login-logo .dep{font-size:26px;font-weight:700;color:#1a56db;letter-spacing:-.5px}
 .login-logo .sub{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 .login-card label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;margin-top:16px}
-.login-card input{width:100%;border:1.5px solid #d1d5db;border-radius:6px;padding:9px 12px;
-  font-size:14px;font-family:var(--font);transition:.2s}
+.login-card input{width:100%;border:1.5px solid #d1d5db;border-radius:6px;padding:9px 12px;font-size:14px;font-family:var(--font);transition:.2s}
 .login-card input:focus{outline:none;border-color:#1a56db;box-shadow:0 0 0 3px #dbeafe}
-.btn-login{width:100%;background:#1a56db;color:#fff;border:none;border-radius:6px;
-  padding:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:20px;
-  font-family:var(--font);transition:.2s}
+.btn-login{width:100%;background:#1a56db;color:#fff;border:none;border-radius:6px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:20px;font-family:var(--font);transition:.2s}
 .btn-login:hover{background:#1240a0}
 .login-err{color:#c62828;font-size:12px;margin-top:10px;text-align:center;display:none}
-
-/* APP */
 #app{display:none;flex-direction:column;min-height:100vh}
-.topbar{background:#1240a0;color:#fff;padding:0 24px;height:52px;display:flex;
-  align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;
-  box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.topbar{background:#1240a0;color:#fff;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .topbar .brand{font-weight:700;font-size:15px;letter-spacing:-.3px}
 .topbar .brand span{font-weight:400;font-size:12px;opacity:.7;margin-left:6px}
 .topbar-right{display:flex;align-items:center;gap:14px}
-.topbar .user-badge{background:rgba(255,255,255,.15);border-radius:20px;
-  padding:4px 12px;font-size:12px;font-weight:600}
-.btn-out{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
-  color:#fff;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;
-  font-family:var(--font);transition:.2s}
+.topbar .user-badge{background:rgba(255,255,255,.15);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600}
+.btn-out{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:var(--font);transition:.2s}
 .btn-out:hover{background:rgba(255,255,255,.22)}
-
-/* SIDEBAR + CONTENT */
 .main-wrap{display:flex;flex:1}
-.sidebar{width:220px;background:#fff;border-right:1px solid var(--gray3);
-  padding:16px 0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto}
-.nav-section{font-size:10px;font-weight:700;color:var(--gray5);text-transform:uppercase;
-  letter-spacing:1px;padding:12px 20px 6px}
-.nav-item{display:flex;align-items:center;gap:8px;padding:8px 20px;cursor:pointer;
-  font-size:13px;color:var(--gray7);transition:.15s;border-left:3px solid transparent}
+.sidebar{width:220px;background:#fff;border-right:1px solid var(--gray3);padding:16px 0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto}
+.nav-section{font-size:10px;font-weight:700;color:var(--gray5);text-transform:uppercase;letter-spacing:1px;padding:12px 20px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 20px;cursor:pointer;font-size:13px;color:var(--gray7);transition:.15s;border-left:3px solid transparent}
 .nav-item:hover{background:var(--blue-light);color:var(--blue)}
-.nav-item.active{background:var(--blue-light);color:var(--blue);font-weight:600;
-  border-left-color:var(--blue)}
+.nav-item.active{background:var(--blue-light);color:var(--blue);font-weight:600;border-left-color:var(--blue)}
 .nav-icon{font-size:16px;width:20px;text-align:center}
-
 .content{flex:1;padding:24px;overflow-y:auto;max-width:calc(100vw - 220px)}
-.page{display:none}
-.page.active{display:block}
-
-/* PAGE HEADER */
 .page-header{margin-bottom:20px}
 .page-title{font-size:20px;font-weight:700;color:var(--gray9)}
 .page-sub{font-size:13px;color:var(--gray5);margin-top:2px}
-
-/* KPI CARDS */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
-.kpi-card{background:#fff;border-radius:10px;padding:16px;border:1px solid var(--gray3);
-  box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.kpi-card{background:#fff;border-radius:10px;padding:16px;border:1px solid var(--gray3);box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .kpi-label{font-size:11px;font-weight:600;color:var(--gray5);text-transform:uppercase;letter-spacing:.5px}
 .kpi-val{font-size:26px;font-weight:700;color:var(--blue);margin:6px 0 2px;font-family:var(--mono)}
 .kpi-desc{font-size:11px;color:var(--gray5)}
-
-/* CARDS / PANELS */
 .card{background:#fff;border-radius:10px;border:1px solid var(--gray3);margin-bottom:20px;overflow:hidden}
 .card-head{padding:14px 18px;border-bottom:1px solid var(--gray3);display:flex;align-items:center;justify-content:space-between}
 .card-head h3{font-size:14px;font-weight:700;color:var(--gray9)}
 .card-body{padding:18px}
-
-/* TABLES */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{background:#f1f5fb;font-weight:700;color:var(--gray7);text-align:left;
-  padding:8px 10px;border-bottom:2px solid var(--gray3);white-space:nowrap;font-size:11px;text-transform:uppercase}
+th{background:#f1f5fb;font-weight:700;color:var(--gray7);text-align:left;padding:8px 10px;border-bottom:2px solid var(--gray3);white-space:nowrap;font-size:11px;text-transform:uppercase}
 td{padding:7px 10px;border-bottom:1px solid var(--gray2);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#f8f9ff}
-.indent1{padding-left:20px!important;font-style:italic;color:#555}
-.indent2{padding-left:32px!important;color:#666}
 .prog-header td{background:#1240a0;color:#fff;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
 .outcome-header td{background:#e8f0fe;color:#1a56db;font-weight:700;font-size:11px;text-transform:uppercase}
 .output-header td{background:#e8f5e9;color:#0e7a3a;font-weight:700;font-size:11px;text-transform:uppercase}
-
-/* BADGES */
 .badge{display:inline-block;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:600}
 .badge-green{background:var(--green-light);color:var(--green)}
 .badge-red{background:var(--red-light);color:var(--red)}
 .badge-amber{background:var(--amber-light);color:var(--amber)}
 .badge-blue{background:var(--blue-light);color:var(--blue)}
-
-/* TABS */
 .tab-bar{display:flex;gap:0;border-bottom:2px solid var(--gray3);margin-bottom:18px;overflow-x:auto}
-.tab-btn{padding:8px 16px;border:none;background:none;cursor:pointer;
-  font-family:var(--font);font-size:13px;color:var(--gray7);border-bottom:2px solid transparent;
-  margin-bottom:-2px;white-space:nowrap;transition:.15s}
+.tab-btn{padding:8px 16px;border:none;background:none;cursor:pointer;font-family:var(--font);font-size:13px;color:var(--gray7);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:.15s}
 .tab-btn:hover{color:var(--blue)}
 .tab-btn.active{color:var(--blue);font-weight:700;border-bottom-color:var(--blue)}
-
-/* FORM */
 .form-section{margin-bottom:22px}
-.form-section-title{font-size:12px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.5px;color:var(--blue);margin-bottom:10px;padding-bottom:6px;
-  border-bottom:2px solid var(--blue-light)}
-.prog-section-lbl{font-size:11px;font-weight:700;background:#1240a0;color:#fff;
-  padding:5px 10px;border-radius:4px;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px}
-.indicator-lbl{font-size:11px;font-weight:600;background:#e8f0fe;color:#1240a0;
-  padding:4px 8px;border-radius:3px;margin:8px 0 4px}
-.indicator-sub{font-size:11px;color:#555;font-style:italic;margin:2px 0 4px 12px}
-.indicator-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
-  padding:3px 8px;border-radius:3px;margin:8px 0 4px;display:inline-block}
+.prog-section-lbl{font-size:11px;font-weight:700;background:#1240a0;color:#fff;padding:5px 10px;border-radius:4px;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.3px;display:block}
+.indicator-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;border-radius:3px;margin:8px 0 4px;display:inline-block}
 .outcome-lbl{background:#dbeafe;color:#1e40af}
 .output-lbl{background:#d1fae5;color:#065f46}
-
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;align-items:end}
-.field-row.single{grid-template-columns:1fr}
 .field-group label{font-size:11px;font-weight:600;color:#374151;margin-bottom:3px;display:block}
 .field-group.target label{color:#b45309}
 .field-group.accomplishment label{color:#0e7a3a}
-.field-group input{width:100%;border:1.5px solid #d1d5db;border-radius:5px;padding:7px 10px;
-  font-size:13px;font-family:var(--mono);transition:.2s}
+.field-group input,.field-group textarea{width:100%;border:1.5px solid #d1d5db;border-radius:5px;padding:7px 10px;font-size:13px;font-family:var(--font);transition:.2s}
 .field-group.target input{border-color:#fde68a;background:#fffbf0}
 .field-group.accomplishment input{border-color:#a7f3d0;background:#f0fdf8}
-.field-group input:focus{outline:none;box-shadow:0 0 0 3px rgba(26,86,219,.15)}
+.field-group textarea{border-color:#e0e7ff;background:#f5f7ff;resize:vertical;min-height:60px;font-size:12px}
+.field-group input:focus,.field-group textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(26,86,219,.15)}
 .field-header{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
-.field-header span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
-  text-align:center;padding:3px 0;border-radius:3px}
+.field-header span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:center;padding:3px 0;border-radius:3px}
 .field-header .th-target{background:#fef3c7;color:#92400e}
 .field-header .th-acc{background:#d1fae5;color:#065f46}
-
-.btn{border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:600;
-  cursor:pointer;font-family:var(--font);transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.btn{border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.2s;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:var(--blue);color:#fff}
 .btn-primary:hover{background:var(--blue-dark)}
 .btn-success{background:#059669;color:#fff}
@@ -162,21 +105,15 @@ tr:hover td{background:#f8f9ff}
 .btn-sm{padding:5px 12px;font-size:12px}
 .btn-outline{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
 .btn-outline:hover{background:var(--blue-light)}
-
 .alert{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px}
 .alert-success{background:#d1fae5;color:#065f46;border:1px solid #a7f3d0}
 .alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
 .alert-info{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
 .alert-warning{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-
-/* CHART GRID */
 .chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;margin-bottom:20px}
 .chart-card{background:#fff;border-radius:10px;border:1px solid var(--gray3);padding:16px}
-.chart-card h4{font-size:12px;font-weight:700;color:#374151;margin-bottom:12px;
-  text-transform:uppercase;letter-spacing:.4px}
-.chart-wrap{position:relative;height:220px}
-
-/* SDO SUBMISSION CARDS */
+.chart-card h4{font-size:12px;font-weight:700;color:#374151;margin-bottom:12px;text-transform:uppercase;letter-spacing:.4px}
+.chart-wrap{position:relative;height:200px}
 .sdo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
 .sdo-card{background:#fff;border-radius:8px;border:2px solid var(--gray3);padding:14px;cursor:pointer;transition:.2s}
 .sdo-card:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(26,86,219,.12)}
@@ -186,53 +123,32 @@ tr:hover td{background:#f8f9ff}
 .sdo-quarters{display:flex;gap:5px;flex-wrap:wrap}
 .q-pill{padding:2px 7px;border-radius:12px;font-size:11px;font-weight:600;background:var(--gray2);color:#555}
 .q-pill.done{background:var(--green-light);color:var(--green)}
-
-/* PDF UPLOAD */
-.upload-zone{border:2px dashed #cbd5e1;border-radius:8px;padding:20px;text-align:center;
-  cursor:pointer;transition:.2s;background:#f8fafc}
+.upload-zone{border:2px dashed #cbd5e1;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:.2s;background:#f8fafc;display:block}
 .upload-zone:hover{border-color:var(--blue);background:#eff6ff}
 .upload-zone input[type=file]{display:none}
 .uploaded-list{margin-top:10px}
-.file-item{display:flex;align-items:center;justify-content:space-between;
-  padding:6px 10px;background:#f1f5f9;border-radius:5px;margin-top:6px;font-size:12px}
+.file-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#f1f5f9;border-radius:5px;margin-top:6px;font-size:12px}
 .file-item a{color:var(--blue);text-decoration:none;font-weight:600}
-.file-item a:hover{text-decoration:underline}
-
-/* TOGGLE */
-.toggle-row{display:flex;align-items:center;justify-content:space-between;
-  padding:10px 0;border-bottom:1px solid var(--gray2)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray2)}
 .toggle-row:last-child{border-bottom:none}
 .toggle-label{font-size:13px;font-weight:600}
 .toggle-switch{position:relative;width:44px;height:24px;cursor:pointer}
 .toggle-switch input{opacity:0;width:0;height:0}
 .toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:12px;transition:.2s}
-.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;
-  left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.toggle-switch input:checked + .toggle-slider{background:#10b981}
-.toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px)}
-
-/* VARIANCE */
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-switch input:checked+.toggle-slider{background:#10b981}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px)}
 .var-pos{color:var(--green);font-weight:600}
 .var-neg{color:var(--red);font-weight:600}
-.var-zero{color:var(--gray5)}
-
-/* RESPONSIVE */
-@media(max-width:700px){
-  .sidebar{display:none}
-  .content{max-width:100vw;padding:14px}
-  .kpi-grid{grid-template-columns:1fr 1fr}
-  .chart-grid{grid-template-columns:1fr}
-}
-
+.remark-box{background:#f5f7ff;border:1px solid #e0e7ff;border-radius:5px;padding:8px 10px;font-size:12px;color:#374151;margin-top:4px;font-style:italic;white-space:pre-wrap}
+.locked-notice{background:#fef9ec;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;color:#92400e;font-size:13px;font-weight:500;margin-bottom:16px}
 .loading{text-align:center;padding:40px;color:#6b7280}
-.spinner{display:inline-block;width:24px;height:24px;border:3px solid #e5e7eb;
-  border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.sidebar{display:none}.content{max-width:100vw;padding:14px}.kpi-grid{grid-template-columns:1fr 1fr}.chart-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
-<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-logo">
@@ -247,8 +163,6 @@ tr:hover td{background:#f8f9ff}
     <div class="login-err" id="loginErr">Invalid username or password.</div>
   </div>
 </div>
-
-<!-- APP -->
 <div id="app">
   <div class="topbar">
     <div class="brand">DepEd Region XIII – BAR 1 Portal <span>CY 2026</span></div>
@@ -262,164 +176,122 @@ tr:hover td{background:#f8f9ff}
     <div class="content" id="contentArea"></div>
   </div>
 </div>
-
 <script>
-// ===================== SUPABASE =====================
-const SUPA_URL = 'https://xxxqiermuvjsyejmpuwq.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4eHFpZXJtdXZqc3llam1wdXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjczOTEsImV4cCI6MjA5MDYwMzM5MX0.NRT5talMBXzC3lLuXicRs8x6ZdQM4_wQYsmxO6FzE1o';
-const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
+const SUPA_URL='https://xxxqiermuvjsyejmpuwq.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4eHFpZXJtdXZqc3llam1wdXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjczOTEsImV4cCI6MjA5MDYwMzM5MX0.NRT5talMBXzC3lLuXicRs8x6ZdQM4_wQYsmxO6FzE1o';
+const{createClient}=supabase;
+const db=createClient(SUPA_URL,SUPA_KEY);
 
-// ===================== ACCOUNTS =====================
-const ACCOUNTS = {
-  admin: { pass:'Admin@2026', role:'admin', name:'Regional Office – Admin' },
-  adn:   { pass:'ADN@2026',   role:'sdo',   name:'Agusan del Norte',      sdo:'ADN' },
-  ads:   { pass:'ADS@2026',   role:'sdo',   name:'Agusan del Sur',        sdo:'ADS' },
-  bay:   { pass:'BAY@2026',   role:'sdo',   name:'Bayugan City',          sdo:'BAY' },
-  bis:   { pass:'BIS@2026',   role:'sdo',   name:'Bislig City',           sdo:'BIS' },
-  but:   { pass:'BUT@2026',   role:'sdo',   name:'Butuan City',           sdo:'BUT' },
-  cbr:   { pass:'CBR@2026',   role:'sdo',   name:'Cabadbaran City',       sdo:'CBR' },
-  din:   { pass:'DIN@2026',   role:'sdo',   name:'Dinagat Islands',       sdo:'DIN' },
-  sia:   { pass:'SIA@2026',   role:'sdo',   name:'Siargao',               sdo:'SIA' },
-  sc:    { pass:'SC@2026',    role:'sdo',   name:'Surigao City',          sdo:'SC'  },
-  sdn:   { pass:'SDN@2026',   role:'sdo',   name:'Surigao del Norte',     sdo:'SDN' },
-  sds:   { pass:'SDS@2026',   role:'sdo',   name:'Surigao del Sur',       sdo:'SDS' },
-  tan:   { pass:'TAN@2026',   role:'sdo',   name:'Tandag City',           sdo:'TAN' }
+const ACCOUNTS={
+  admin:{pass:'Admin@2026',role:'admin',name:'Regional Office – Admin'},
+  adn:{pass:'ADN@2026',role:'sdo',name:'Agusan del Norte',sdo:'ADN'},
+  ads:{pass:'ADS@2026',role:'sdo',name:'Agusan del Sur',sdo:'ADS'},
+  bay:{pass:'BAY@2026',role:'sdo',name:'Bayugan City',sdo:'BAY'},
+  bis:{pass:'BIS@2026',role:'sdo',name:'Bislig City',sdo:'BIS'},
+  but:{pass:'BUT@2026',role:'sdo',name:'Butuan City',sdo:'BUT'},
+  cbr:{pass:'CBR@2026',role:'sdo',name:'Cabadbaran City',sdo:'CBR'},
+  din:{pass:'DIN@2026',role:'sdo',name:'Dinagat Islands',sdo:'DIN'},
+  sia:{pass:'SIA@2026',role:'sdo',name:'Siargao',sdo:'SIA'},
+  sc:{pass:'SC@2026',role:'sdo',name:'Surigao City',sdo:'SC'},
+  sdn:{pass:'SDN@2026',role:'sdo',name:'Surigao del Norte',sdo:'SDN'},
+  sds:{pass:'SDS@2026',role:'sdo',name:'Surigao del Sur',sdo:'SDS'},
+  tan:{pass:'TAN@2026',role:'sdo',name:'Tandag City',sdo:'TAN'}
 };
+const SDO_LIST=['ADN','ADS','BAY','BIS','BUT','CBR','DIN','SIA','SC','SDN','SDS','TAN'];
+const SDO_NAMES={ADN:'Agusan del Norte',ADS:'Agusan del Sur',BAY:'Bayugan City',BIS:'Bislig City',BUT:'Butuan City',CBR:'Cabadbaran City',DIN:'Dinagat Islands',SIA:'Siargao',SC:'Surigao City',SDN:'Surigao del Norte',SDS:'Surigao del Sur',TAN:'Tandag City'};
+const QUARTERS=['Q1','Q2','Q3','Q4'];
 
-const SDO_LIST = ['ADN','ADS','BAY','BIS','BUT','CBR','DIN','SIA','SC','SDN','SDS','TAN'];
-const SDO_NAMES = {
-  ADN:'Agusan del Norte', ADS:'Agusan del Sur', BAY:'Bayugan City',
-  BIS:'Bislig City', BUT:'Butuan City', CBR:'Cabadbaran City',
-  DIN:'Dinagat Islands', SIA:'Siargao', SC:'Surigao City',
-  SDN:'Surigao del Norte', SDS:'Surigao del Sur', TAN:'Tandag City'
-};
-const QUARTERS = ['Q1','Q2','Q3','Q4'];
-
-// ===================== INDICATORS STRUCTURE =====================
-// type: 'pct'=percentage, 'num'=number, 'rate'=rate/ratio
-const PROGRAMS = [
-  {
-    key:'EPPD', label:'Education Policy Development Program',
-    sections:[
-      { type:'outcome', items:[
-        { key:'eppd_o1', label:'Percentage of completed education researches used for policy development', unit:'%' },
-        { key:'eppd_o2', label:'Percentage of satisfactory feedback from clients on issued policies', unit:'%' },
-      ]},
-      { type:'output', items:[
-        { key:'eppd_p1', label:'Number of policies reviewed', unit:'#' },
-        { key:'eppd_p2', label:'Number of education researches completed', unit:'#' },
-        { key:'eppd_p3', label:'Number of proposed policies reviewed', unit:'#' },
-      ]}
-    ]
-  },
-  {
-    key:'BEIP', label:'Basic Education Inputs Program',
-    sections:[
-      { type:'outcome', items:[
-        { key:'beip_o1a', label:'Percentage of public schools meeting the standard ratio for teachers – Elementary', unit:'%' },
-        { key:'beip_o1b', label:'Percentage of public schools meeting the standard ratio for teachers – Junior High School', unit:'%' },
-        { key:'beip_o1c', label:'Percentage of public schools meeting the standard ratio for teachers – Senior High School', unit:'%' },
-        { key:'beip_o2a', label:'Percentage of public schools meeting the standard ratio for classrooms – Grades 1-10', unit:'%' },
-        { key:'beip_o2b', label:'Percentage of public schools meeting the standard ratio for classrooms – Senior High School', unit:'%' },
-        { key:'beip_o3a', label:'Percentage of public schools provided with ICT package – Elementary', unit:'%' },
-        { key:'beip_o3b', label:'Percentage of public schools provided with ICT package – Junior High School', unit:'%' },
-        { key:'beip_o3c', label:'Percentage of public schools provided with ICT package – Senior High School', unit:'%' },
-      ]},
-      { type:'output', items:[
-        { key:'beip_p1a', label:'Number of new classrooms constructed', unit:'#' },
-        { key:'beip_p1b', label:'Number of new classrooms on-going construction', unit:'#' },
-        { key:'beip_p1c', label:'Textbooks and instructional/learning materials procured for printing and delivery', unit:'#' },
-        { key:'beip_p2a', label:'Number of equipment/tools procured – Science and Math', unit:'#' },
-        { key:'beip_p2b', label:'Number of equipment/tools procured – Technical-Vocational-Livelihood', unit:'#' },
-        { key:'beip_p2c', label:'Number of equipment/tools procured – ICT', unit:'#' },
-        { key:'beip_p3',  label:'Number of newly-created teaching positions filled up', unit:'#' },
-      ]}
-    ]
-  },
-  {
-    key:'IEP', label:'Inclusive Education Program',
-    sections:[
-      { type:'outcome', items:[
-        { key:'iep_o1a', label:'Percentage of learners enrolled in Special Needs Education (SNED) – public', unit:'%' },
-        { key:'iep_o1b', label:'Percentage of learners enrolled in Arabic Language Islamic Values Education (ALIVE) – public and private', unit:'%' },
-        { key:'iep_o1c', label:'Percentage of learners enrolled in Indigenous Peoples Education (IPED) – public', unit:'%' },
-        { key:'iep_o1d', label:'Percentage of learners enrolled in Alternative Learning System (ALS)', unit:'%' },
-        { key:'iep_o2',  label:'Percentage of learners provided with learning resources', unit:'%' },
-      ]},
-      { type:'output', items:[
-        { key:'iep_p1a', label:'Number of schools offering ALIVE – public and private', unit:'#' },
-        { key:'iep_p1b', label:'Number of schools offering IPED – public', unit:'#' },
-        { key:'iep_p1c', label:'Number of schools offering SNED – public', unit:'#' },
-        { key:'iep_p2',  label:'Number of public schools provided with learning resources', unit:'#' },
-        { key:'iep_p3',  label:'Percentage of reported errors in learning resources addressed', unit:'%' },
-      ]}
-    ]
-  },
-  {
-    key:'SSLP', label:'Support to Schools and Learners Program',
-    sections:[
-      { type:'outcome', items:[
-        { key:'sslp_o1a', label:'Retention rate – Elementary', unit:'%' },
-        { key:'sslp_o1b', label:'Retention rate – Secondary (Grades 7 to 12)', unit:'%' },
-        { key:'sslp_o2a', label:'Completion rate – Elementary', unit:'%' },
-        { key:'sslp_o2b', label:'Completion rate – Secondary (Grades 7 to 12)', unit:'%' },
-        { key:'sslp_o3a', label:'Proportion of Learners achieving at least nearly proficient in NAT – Elementary (Grade 6)', unit:'%' },
-        { key:'sslp_o3b', label:'Proportion of Learners achieving at least nearly proficient in NAT – Junior High School (Grade 10)', unit:'%' },
-        { key:'sslp_o3c', label:'Proportion of Learners achieving at least nearly proficient in NAT – Senior High School (Grade 12)', unit:'%' },
-      ]},
-      { type:'output', items:[
-        { key:'sslp_p1a', label:'Number of learners benefitting from School-Based Feeding Program – Hot Meals', unit:'#' },
-        { key:'sslp_p1b', label:'Number of learners benefitting from School-Based Feeding Program – Milk', unit:'#' },
-        { key:'sslp_p2a', label:'Number of grantees – Educational Service Contracting (ESC)', unit:'#' },
-        { key:'sslp_p2b', label:'Number of grantees – Senior High School Voucher Program (SHSVP)', unit:'#' },
-        { key:'sslp_p2c', label:'Number of grantees – Joint Delivery Voucher Program (JDVP)', unit:'#' },
-      ]}
-    ]
-  },
-  {
-    key:'EHRD', label:'Education Human Resource Development Program',
-    sections:[
-      { type:'outcome', items:[
-        { key:'ehrd_o1',  label:'Increase in percentage of public schools conducting SLAC sessions (Total)', unit:'%' },
-        { key:'ehrd_o1a', label:'Percentage of public schools conducting SLAC – Elementary', unit:'%' },
-        { key:'ehrd_o1b', label:'Percentage of public schools conducting SLAC – JHS', unit:'%' },
-        { key:'ehrd_o1c', label:'Percentage of public schools conducting SLAC – SHS', unit:'%' },
-      ]},
-      { type:'output', items:[
-        { key:'ehrd_p1a', label:'Number of teachers trained', unit:'#' },
-        { key:'ehrd_p1b', label:'Number of teaching-related personnel trained', unit:'#' },
-        { key:'ehrd_p2',  label:'Number of non-teaching personnel trained', unit:'#' },
-      ]}
-    ]
-  }
+const PROGRAMS=[
+  {key:'EPPD',label:'Education Policy Development Program',sections:[
+    {type:'outcome',items:[
+      {key:'eppd_o1',label:'Percentage of completed education researches used for policy development',unit:'%'},
+      {key:'eppd_o2',label:'Percentage of satisfactory feedback from clients on issued policies',unit:'%'}
+    ]},
+    {type:'output',items:[
+      {key:'eppd_p1',label:'Number of policies reviewed',unit:'#'},
+      {key:'eppd_p2',label:'Number of education researches completed',unit:'#'},
+      {key:'eppd_p3',label:'Number of proposed policies reviewed',unit:'#'}
+    ]}
+  ]},
+  {key:'BEIP',label:'Basic Education Inputs Program',sections:[
+    {type:'outcome',items:[
+      {key:'beip_o1a',label:'Percentage of public schools meeting the standard ratio for teachers – Elementary',unit:'%'},
+      {key:'beip_o1b',label:'Percentage of public schools meeting the standard ratio for teachers – Junior High School',unit:'%'},
+      {key:'beip_o1c',label:'Percentage of public schools meeting the standard ratio for teachers – Senior High School',unit:'%'},
+      {key:'beip_o2a',label:'Percentage of public schools meeting the standard ratio for classrooms – Grades 1-10',unit:'%'},
+      {key:'beip_o2b',label:'Percentage of public schools meeting the standard ratio for classrooms – Senior High School',unit:'%'},
+      {key:'beip_o3a',label:'Percentage of public schools provided with ICT package – Elementary',unit:'%'},
+      {key:'beip_o3b',label:'Percentage of public schools provided with ICT package – Junior High School',unit:'%'},
+      {key:'beip_o3c',label:'Percentage of public schools provided with ICT package – Senior High School',unit:'%'}
+    ]},
+    {type:'output',items:[
+      {key:'beip_p1a',label:'Number of new classrooms constructed',unit:'#'},
+      {key:'beip_p1b',label:'Number of new classrooms on-going construction',unit:'#'},
+      {key:'beip_p1c',label:'Textbooks and instructional/learning materials procured for printing and delivery',unit:'#'},
+      {key:'beip_p2a',label:'Number of equipment/tools procured – Science and Math',unit:'#'},
+      {key:'beip_p2b',label:'Number of equipment/tools procured – Technical-Vocational-Livelihood',unit:'#'},
+      {key:'beip_p2c',label:'Number of equipment/tools procured – ICT',unit:'#'},
+      {key:'beip_p3',label:'Number of newly-created teaching positions filled up',unit:'#'}
+    ]}
+  ]},
+  {key:'IEP',label:'Inclusive Education Program',sections:[
+    {type:'outcome',items:[
+      {key:'iep_o1a',label:'Percentage of learners enrolled in Special Needs Education (SNED) – public',unit:'%'},
+      {key:'iep_o1b',label:'Percentage of learners enrolled in ALIVE – public and private',unit:'%'},
+      {key:'iep_o1c',label:'Percentage of learners enrolled in IPED – public',unit:'%'},
+      {key:'iep_o1d',label:'Percentage of learners enrolled in Alternative Learning System (ALS)',unit:'%'},
+      {key:'iep_o2',label:'Percentage of learners provided with learning resources',unit:'%'}
+    ]},
+    {type:'output',items:[
+      {key:'iep_p1a',label:'Number of schools offering ALIVE – public and private',unit:'#'},
+      {key:'iep_p1b',label:'Number of schools offering IPED – public',unit:'#'},
+      {key:'iep_p1c',label:'Number of schools offering SNED – public',unit:'#'},
+      {key:'iep_p2',label:'Number of public schools provided with learning resources',unit:'#'},
+      {key:'iep_p3',label:'Percentage of reported errors in learning resources addressed',unit:'%'}
+    ]}
+  ]},
+  {key:'SSLP',label:'Support to Schools and Learners Program',sections:[
+    {type:'outcome',items:[
+      {key:'sslp_o1a',label:'Retention rate – Elementary',unit:'%'},
+      {key:'sslp_o1b',label:'Retention rate – Secondary (Grades 7 to 12)',unit:'%'},
+      {key:'sslp_o2a',label:'Completion rate – Elementary',unit:'%'},
+      {key:'sslp_o2b',label:'Completion rate – Secondary (Grades 7 to 12)',unit:'%'},
+      {key:'sslp_o3a',label:'Proportion achieving at least nearly proficient in NAT – Elementary (Grade 6)',unit:'%'},
+      {key:'sslp_o3b',label:'Proportion achieving at least nearly proficient in NAT – Junior High School (Grade 10)',unit:'%'},
+      {key:'sslp_o3c',label:'Proportion achieving at least nearly proficient in NAT – Senior High School (Grade 12)',unit:'%'}
+    ]},
+    {type:'output',items:[
+      {key:'sslp_p1a',label:'Number of learners in School-Based Feeding Program – Hot Meals',unit:'#'},
+      {key:'sslp_p1b',label:'Number of learners in School-Based Feeding Program – Milk',unit:'#'},
+      {key:'sslp_p2a',label:'Number of grantees – Educational Service Contracting (ESC)',unit:'#'},
+      {key:'sslp_p2b',label:'Number of grantees – Senior High School Voucher Program (SHSVP)',unit:'#'},
+      {key:'sslp_p2c',label:'Number of grantees – Joint Delivery Voucher Program (JDVP)',unit:'#'}
+    ]}
+  ]},
+  {key:'EHRD',label:'Education Human Resource Development Program',sections:[
+    {type:'outcome',items:[
+      {key:'ehrd_o1',label:'Increase in percentage of public schools conducting SLAC sessions (Total)',unit:'%'},
+      {key:'ehrd_o1a',label:'Percentage of public schools conducting SLAC – Elementary',unit:'%'},
+      {key:'ehrd_o1b',label:'Percentage of public schools conducting SLAC – JHS',unit:'%'},
+      {key:'ehrd_o1c',label:'Percentage of public schools conducting SLAC – SHS',unit:'%'}
+    ]},
+    {type:'output',items:[
+      {key:'ehrd_p1a',label:'Number of teachers trained',unit:'#'},
+      {key:'ehrd_p1b',label:'Number of teaching-related personnel trained',unit:'#'},
+      {key:'ehrd_p2',label:'Number of non-teaching personnel trained',unit:'#'}
+    ]}
+  ]}
 ];
 
-// flat list of all keys
-function allKeys(){
-  let keys=[];
-  PROGRAMS.forEach(p=>p.sections.forEach(s=>s.items.forEach(i=>keys.push(i.key))));
-  return keys;
-}
-function getIndicator(key){
-  for(const p of PROGRAMS)
-    for(const s of p.sections)
-      for(const i of s.items)
-        if(i.key===key) return i;
-  return null;
-}
+function getIndicator(key){for(const p of PROGRAMS)for(const s of p.sections)for(const i of s.items)if(i.key===key)return i;return null;}
 
-// ===================== STATE =====================
-let currentUser=null;
-let currentPage='';
-let dbCache = {}; // { sdo_quarter: { key: {target,acc} } }
-let pdfUploadsCache = [];
-let pdfControlCache = {}; // { Q1: bool, Q2: bool, ... }
-let currentQFilter = 'Q1';
+// ---- STATE ----
+let currentUser=null,currentPage='',currentQFilter='Q1';
+let dbCache={},pdfControlCache={},encodeControlCache={};
 
-function cacheKey(sdo,qtr){ return sdo+'_'+qtr; }
+function cacheKey(sdo,qtr){return sdo+'_'+qtr;}
 
-// ===================== LOGIN / LOGOUT =====================
+// ---- LOGIN / LOGOUT ----
 function doLogin(){
   const u=document.getElementById('loginUser').value.trim().toLowerCase();
   const p=document.getElementById('loginPass').value.trim();
@@ -431,18 +303,17 @@ function doLogin(){
   document.getElementById('app').style.display='flex';
   document.getElementById('topUser').textContent=acc.name;
   renderNav();
-  if(acc.role==='admin') navTo('admin-dashboard');
-  else navTo('sdo-encode');
+  navTo(acc.role==='admin'?'admin-dashboard':'sdo-encode');
 }
 function doLogout(){
-  currentUser=null; dbCache={}; pdfUploadsCache=[]; pdfControlCache={}; currentQFilter='Q1';
+  currentUser=null;dbCache={};pdfControlCache={};encodeControlCache={};currentQFilter='Q1';
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('app').style.display='none';
   document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
 }
 
-// ===================== NAVIGATION =====================
+// ---- NAVIGATION ----
 function renderNav(){
   const s=document.getElementById('sidebar');
   const isAdmin=currentUser.role==='admin';
@@ -453,12 +324,15 @@ function renderNav(){
     <div class="nav-section">Data Management</div>
     <div class="nav-item" onclick="navTo('admin-sdo-view')"><span class="nav-icon">📋</span>SDO Submissions</div>
     <div class="nav-item" onclick="navTo('admin-consolidated')"><span class="nav-icon">📑</span>Consolidated Table</div>
+    <div class="nav-item" onclick="navTo('admin-remarks')"><span class="nav-icon">💬</span>Consolidated Remarks</div>
     <div class="nav-item" onclick="navTo('admin-ro-targets')"><span class="nav-icon">🎯</span>RO Annual Targets</div>
     <div class="nav-item" onclick="navTo('admin-edit')"><span class="nav-icon">✏️</span>Edit SDO Data</div>
+    <div class="nav-section">Controls</div>
+    <div class="nav-item" onclick="navTo('admin-encode-control')"><span class="nav-icon">🔒</span>Encoding Control</div>
+    <div class="nav-item" onclick="navTo('admin-pdf-control')"><span class="nav-icon">⚙️</span>PDF Upload Control</div>
     <div class="nav-section">Files</div>
-    <div class="nav-item" onclick="navTo('admin-pdf-view')"><span class="nav-icon">📎</span>Uploaded PDFs</div>
-    <div class="nav-item" onclick="navTo('admin-pdf-control')"><span class="nav-icon">⚙️</span>PDF Upload Control</div>`;
-  } else {
+    <div class="nav-item" onclick="navTo('admin-pdf-view')"><span class="nav-icon">📎</span>Uploaded PDFs</div>`;
+  }else{
     h+=`<div class="nav-section">Encoding</div>
     <div class="nav-item" onclick="navTo('sdo-encode')"><span class="nav-icon">📝</span>Encode Data</div>
     <div class="nav-section">Reports</div>
@@ -469,294 +343,273 @@ function renderNav(){
   }
   s.innerHTML=h;
 }
-
 function navTo(page){
   currentPage=page;
-  document.querySelectorAll('.nav-item').forEach(el=>{
-    el.classList.toggle('active', el.getAttribute('onclick')===`navTo('${page}')`);
-  });
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.getAttribute('onclick')===`navTo('${page}')`));
   renderPage(page);
 }
-
 async function renderPage(page){
   const el=document.getElementById('contentArea');
   el.innerHTML=`<div class="loading"><div class="spinner"></div><p style="margin-top:12px;font-size:13px;color:#6b7280">Loading…</p></div>`;
   if(page==='admin-dashboard')       await renderAdminDashboard(el);
   else if(page==='admin-sdo-view')   await renderAdminSDOView(el);
   else if(page==='admin-consolidated') await renderAdminConsolidated(el);
+  else if(page==='admin-remarks')    await renderAdminRemarks(el);
   else if(page==='admin-ro-targets') await renderAdminROTargets(el);
   else if(page==='admin-edit')       await renderAdminEdit(el);
-  else if(page==='admin-pdf-view')   await renderAdminPDFView(el);
+  else if(page==='admin-encode-control') await renderAdminEncodeControl(el);
   else if(page==='admin-pdf-control') await renderAdminPDFControl(el);
+  else if(page==='admin-pdf-view')   await renderAdminPDFView(el);
   else if(page==='sdo-encode')       await renderSDOEncode(el);
   else if(page==='sdo-summary')      await renderSDOSummary(el);
   else if(page==='sdo-regional')     await renderSDORegional(el);
   else if(page==='sdo-upload')       await renderSDOUpload(el);
 }
 
-// ===================== DATA LAYER =====================
-async function fetchSDOData(sdo, quarter){
+// ---- DATA LAYER ----
+async function fetchSDOData(sdo,quarter){
   const ck=cacheKey(sdo,quarter);
-  if(dbCache[ck]) return dbCache[ck];
-  const { data:acc } = await db.from('bar1_data').select('*').eq('sdo_code',sdo).eq('quarter',quarter);
-  const { data:tgt } = await db.from('bar1_targets').select('*').eq('sdo_code',sdo).eq('quarter',quarter);
+  if(dbCache[ck])return dbCache[ck];
+  const{data:acc}=await db.from('bar1_data').select('*').eq('sdo_code',sdo).eq('quarter',quarter);
+  const{data:tgt}=await db.from('bar1_targets').select('*').eq('sdo_code',sdo).eq('quarter',quarter);
   const map={};
-  (tgt||[]).forEach(r=>{ if(!map[r.field_key]) map[r.field_key]={}; map[r.field_key].target=r.field_value; });
-  (acc||[]).forEach(r=>{ if(!map[r.field_key]) map[r.field_key]={}; map[r.field_key].acc=r.field_value; });
+  (tgt||[]).forEach(r=>{if(!map[r.field_key])map[r.field_key]={};map[r.field_key].target=r.field_value;});
+  (acc||[]).forEach(r=>{if(!map[r.field_key])map[r.field_key]={};
+    if(r.field_key==='__remark__'+r.field_key.replace('__remark__',''))map[r.field_key].remark=r.field_value;
+    else map[r.field_key].acc=r.field_value;
+  });
+  // fetch remarks separately (stored with field_key prefix __rmk_<key>)
+  const{data:rmk}=await db.from('bar1_data').select('*').eq('sdo_code',sdo).eq('quarter',quarter);
+  (rmk||[]).forEach(r=>{
+    if(r.field_key.startsWith('__rmk_')){
+      const k=r.field_key.replace('__rmk_','');
+      if(!map[k])map[k]={};
+      map[k].remark=r.remark_text||r.field_value;
+    }
+  });
   dbCache[ck]=map;
   return map;
 }
 
-async function fetchROTargets(quarter){
-  const { data } = await db.from('bar1_targets').select('*').eq('sdo_code','RO').eq('quarter',quarter);
+async function fetchRemarks(sdo,quarter){
+  // remarks stored in bar1_remarks table
+  const{data}=await db.from('bar1_remarks').select('*').eq('sdo_code',sdo).eq('quarter',quarter);
   const map={};
-  (data||[]).forEach(r=>{ map[r.field_key]=r.field_value; });
+  (data||[]).forEach(r=>{map[r.field_key]=r.remark_text;});
   return map;
 }
 
-async function saveField(sdo, quarter, key, target, acc){
-  // upsert target
-  if(target!==null && target!==''){
-    await db.from('bar1_targets').upsert({sdo_code:sdo,quarter,field_key:key,field_value:parseFloat(target)||0,updated_at:new Date().toISOString()},{onConflict:'sdo_code,quarter,field_key'});
-  }
-  // upsert acc
-  if(acc!==null && acc!==''){
-    await db.from('bar1_data').upsert({sdo_code:sdo,quarter,field_key:key,field_value:parseFloat(acc)||0,updated_at:new Date().toISOString()},{onConflict:'sdo_code,quarter,field_key'});
-  }
-  // clear cache
-  delete dbCache[cacheKey(sdo,quarter)];
+async function saveRemarks(sdo,quarter,remarksObj){
+  const rows=Object.entries(remarksObj).filter(([,v])=>v&&v.trim()).map(([k,v])=>({
+    sdo_code:sdo,quarter,field_key:k,remark_text:v.trim(),updated_at:new Date().toISOString()
+  }));
+  if(!rows.length)return{error:null};
+  return await db.from('bar1_remarks').upsert(rows,{onConflict:'sdo_code,quarter,field_key'});
 }
 
-async function saveAllFields(sdo, quarter, vals){
-  const tgtRows=[], accRows=[];
-  for(const [key,{target,acc}] of Object.entries(vals)){
-    if(target!=='' && target!==null && target!==undefined)
+async function fetchROTargets(quarter){
+  const{data}=await db.from('bar1_targets').select('*').eq('sdo_code','RO').eq('quarter',quarter);
+  const map={};(data||[]).forEach(r=>{map[r.field_key]=r.field_value;});
+  return map;
+}
+
+async function saveAllFields(sdo,quarter,vals){
+  const tgtRows=[],accRows=[];
+  for(const[key,{target,acc}]of Object.entries(vals)){
+    if(target!==''&&target!==null&&target!==undefined)
       tgtRows.push({sdo_code:sdo,quarter,field_key:key,field_value:parseFloat(target)||0,updated_at:new Date().toISOString()});
-    if(acc!=='' && acc!==null && acc!==undefined)
+    if(acc!==''&&acc!==null&&acc!==undefined)
       accRows.push({sdo_code:sdo,quarter,field_key:key,field_value:parseFloat(acc)||0,updated_at:new Date().toISOString()});
   }
-  if(tgtRows.length) await db.from('bar1_targets').upsert(tgtRows,{onConflict:'sdo_code,quarter,field_key'});
-  if(accRows.length) await db.from('bar1_data').upsert(accRows,{onConflict:'sdo_code,quarter,field_key'});
+  if(tgtRows.length)await db.from('bar1_targets').upsert(tgtRows,{onConflict:'sdo_code,quarter,field_key'});
+  if(accRows.length)await db.from('bar1_data').upsert(accRows,{onConflict:'sdo_code,quarter,field_key'});
   delete dbCache[cacheKey(sdo,quarter)];
 }
 
-async function fetchPDFUploads(){
-  const { data } = await db.from('bar1_uploads').select('*').order('uploaded_at',{ascending:false});
-  pdfUploadsCache = data||[];
-  return pdfUploadsCache;
-}
-
-async function fetchPDFControl(){
-  const { data } = await db.from('bar1_data').select('*').eq('sdo_code','__PDF_CTRL__');
+// ENCODE CONTROL: stored in bar1_data with sdo_code='__ENC_CTRL__'
+async function fetchEncodeControl(){
+  const{data}=await db.from('bar1_data').select('*').eq('sdo_code','__ENC_CTRL__');
   const map={Q1:false,Q2:false,Q3:false,Q4:false};
-  (data||[]).forEach(r=>{ if(QUARTERS.includes(r.quarter)) map[r.quarter]=r.field_value===1; });
-  pdfControlCache=map;
-  return map;
+  (data||[]).forEach(r=>{if(QUARTERS.includes(r.quarter))map[r.quarter]=r.field_value===1;});
+  encodeControlCache=map;return map;
+}
+async function setEncodeControl(quarter,enabled){
+  await db.from('bar1_data').upsert({sdo_code:'__ENC_CTRL__',quarter,field_key:'enabled',field_value:enabled?1:0,updated_at:new Date().toISOString()},{onConflict:'sdo_code,quarter,field_key'});
+  encodeControlCache[quarter]=enabled;
 }
 
-async function setPDFControl(quarter, enabled){
+// PDF CONTROL
+async function fetchPDFControl(){
+  const{data}=await db.from('bar1_data').select('*').eq('sdo_code','__PDF_CTRL__');
+  const map={Q1:false,Q2:false,Q3:false,Q4:false};
+  (data||[]).forEach(r=>{if(QUARTERS.includes(r.quarter))map[r.quarter]=r.field_value===1;});
+  pdfControlCache=map;return map;
+}
+async function setPDFControl(quarter,enabled){
   await db.from('bar1_data').upsert({sdo_code:'__PDF_CTRL__',quarter,field_key:'enabled',field_value:enabled?1:0,updated_at:new Date().toISOString()},{onConflict:'sdo_code,quarter,field_key'});
   pdfControlCache[quarter]=enabled;
 }
+async function fetchPDFUploads(){
+  const{data}=await db.from('bar1_uploads').select('*').order('uploaded_at',{ascending:false});
+  return data||[];
+}
 
-// ===================== ADMIN DASHBOARD =====================
+// ---- ADMIN DASHBOARD ----
 async function renderAdminDashboard(el){
-  // fetch all SDO data for selected quarter
-  const qtr = currentQFilter;
+  const qtr=currentQFilter;
   let allData={};
-  for(const sdo of SDO_LIST){ allData[sdo] = await fetchSDOData(sdo,qtr); }
-  const roTargets = await fetchROTargets(qtr);
+  for(const sdo of SDO_LIST){allData[sdo]=await fetchSDOData(sdo,qtr);}
+  const roTargets=await fetchROTargets(qtr);
 
-  function regTotal(key){ return SDO_LIST.reduce((s,sdo)=>s+(allData[sdo]?.[key]?.acc||0),0); }
-  function regAvg(key){ const vals=SDO_LIST.map(s=>allData[s]?.[key]?.acc).filter(v=>v!=null&&v!==''); return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0; }
-  function roTgt(key){ return roTargets[key]??null; }
-  function isPct(key){ const i=getIndicator(key); return i&&i.unit==='%'; }
+  function regTotal(key){return SDO_LIST.reduce((s,sdo)=>s+(allData[sdo]?.[key]?.acc||0),0);}
+  function regAvg(key){const vals=SDO_LIST.map(s=>allData[s]?.[key]?.acc).filter(v=>v!=null);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;}
+  function roTgt(key){return roTargets[key]??null;}
 
-  // KPIs
   const kpis=[
-    { label:'Teachers Trained', val:(regTotal('ehrd_p1a')+regTotal('ehrd_p1b')).toLocaleString(), desc:'Teaching + related staff' },
-    { label:'Non-Teaching Trained', val:regTotal('ehrd_p2').toLocaleString(), desc:'Non-teaching personnel' },
-    { label:'Classrooms Constructed', val:regTotal('beip_p1a').toLocaleString(), desc:'New classrooms' },
-    { label:'Avg Retention Rate (Elem)', val:regAvg('sslp_o1a').toFixed(1)+'%', desc:'All SDOs avg' },
-    { label:'Avg Completion Rate (Elem)', val:regAvg('sslp_o2a').toFixed(1)+'%', desc:'All SDOs avg' },
-    { label:'SLAC Schools (Total)', val:regAvg('ehrd_o1').toFixed(1)+'%', desc:'Avg public schools conducting SLAC' },
+    {label:'Teachers Trained',val:(regTotal('ehrd_p1a')+regTotal('ehrd_p1b')).toLocaleString(),desc:'Teaching + related staff'},
+    {label:'Non-Teaching Trained',val:regTotal('ehrd_p2').toLocaleString(),desc:'Non-teaching personnel'},
+    {label:'Classrooms Constructed',val:regTotal('beip_p1a').toLocaleString(),desc:'New classrooms'},
+    {label:'Avg Retention (Elem)',val:regAvg('sslp_o1a').toFixed(1)+'%',desc:'All SDOs average'},
+    {label:'Avg Completion (Elem)',val:regAvg('sslp_o2a').toFixed(1)+'%',desc:'All SDOs average'},
+    {label:'SLAC Schools',val:regAvg('ehrd_o1').toFixed(1)+'%',desc:'Avg schools conducting SLAC'},
   ];
 
-  let h=`<div class="page-header">
-    <div class="page-title">📊 Regional Dashboard</div>
-    <div class="page-sub">DepEd Region XIII · BAR 1 CY 2026</div>
-  </div>
-  <div class="tab-bar" id="qTabBar">
-    ${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q} 2026</button>`).join('')}
-  </div>
-  <div class="kpi-grid">
-    ${kpis.map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val">${k.val}</div><div class="kpi-desc">${k.desc}</div></div>`).join('')}
-  </div>`;
+  let h=`<div class="page-header"><div class="page-title">📊 Regional Dashboard</div><div class="page-sub">DepEd Region XIII · BAR 1 CY 2026</div></div>
+  <div class="tab-bar">${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q} 2026</button>`).join('')}</div>
+  <div class="kpi-grid">${kpis.map(k=>`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-val">${k.val}</div><div class="kpi-desc">${k.desc}</div></div>`).join('')}</div>`;
 
-  // Per-program charts + tables
+  // Charts: ONE bar per indicator = RO Target (single bar) vs Consolidated Accomplishment (single bar)
   for(const prog of PROGRAMS){
     h+=`<div class="card"><div class="card-head"><h3>${prog.label}</h3></div><div class="card-body">`;
-    // Charts
     h+=`<div class="chart-grid">`;
     for(const sec of prog.sections){
-      for(const item of sec.items){
-        const labels=SDO_LIST.map(s=>s);
-        const accVals=SDO_LIST.map(s=>allData[s]?.[item.key]?.acc??0);
-        const tgtVals=SDO_LIST.map(s=>allData[s]?.[item.key]?.target??null);
-        const roTgtVal=roTgt(item.key);
-        const chartId='chart_'+item.key;
-        h+=`<div class="chart-card">
-          <h4>${item.label}</h4>
-          <div class="chart-wrap"><canvas id="${chartId}"></canvas></div>
-        </div>`;
-      }
-    }
-    h+=`</div>`;
-    // Indicator table per program
-    h+=`<div class="tbl-wrap"><table><thead><tr><th>Indicator</th><th>RO Target</th><th>Regional Total/Avg</th><th>Unit</th><th>Status</th></tr></thead><tbody>`;
-    for(const sec of prog.sections){
-      const typeLabel=sec.type==='outcome'?'OUTCOME INDICATORS':'OUTPUT INDICATORS';
-      h+=`<tr class="${sec.type==='outcome'?'outcome-header':'output-header'}"><td colspan="5">${typeLabel}</td></tr>`;
       for(const item of sec.items){
         const pct=item.unit==='%';
         const regVal=pct?regAvg(item.key):regTotal(item.key);
         const roVal=roTgt(item.key);
-        let status='—', statusClass='';
-        if(roVal!==null&&roVal!==undefined&&regVal>0){
-          if(regVal>=roVal){status='✓ Met';statusClass='badge-green';}
-          else{status='✗ Below';statusClass='badge-red';}
-        }
-        h+=`<tr>
-          <td>${item.label}</td>
-          <td class="mono">${roVal!=null?roVal.toLocaleString():'—'}</td>
-          <td class="mono"><strong>${regVal>0?regVal.toFixed(pct?1:0).toLocaleString():'—'}</strong></td>
+        h+=`<div class="chart-card"><h4>${item.label}</h4><div class="chart-wrap"><canvas id="chart_${item.key}"></canvas></div></div>`;
+      }
+    }
+    h+=`</div>`;
+    // Summary table
+    h+=`<div class="tbl-wrap"><table><thead><tr><th>Indicator</th><th>RO Target</th><th>Consolidated Accomplishment</th><th>Unit</th><th>Status</th></tr></thead><tbody>`;
+    for(const sec of prog.sections){
+      h+=`<tr class="${sec.type==='outcome'?'outcome-header':'output-header'}"><td colspan="5">${sec.type==='outcome'?'OUTCOME':'OUTPUT'} INDICATORS</td></tr>`;
+      for(const item of sec.items){
+        const pct=item.unit==='%';
+        const regVal=pct?regAvg(item.key):regTotal(item.key);
+        const roVal=roTgt(item.key);
+        let status='—',statusClass='';
+        if(roVal!==null&&regVal>0){if(regVal>=roVal){status='✓ Met';statusClass='badge-green';}else{status='✗ Below';statusClass='badge-red';}}
+        h+=`<tr><td>${item.label}</td>
+          <td class="mono">${roVal!=null?Number(roVal).toLocaleString():'—'}</td>
+          <td class="mono"><strong>${regVal>0?regVal.toFixed(pct?1:0):'—'}</strong></td>
           <td>${item.unit}</td>
-          <td>${statusClass?`<span class="badge ${statusClass}">${status}</span>`:status}</td>
-        </tr>`;
+          <td>${statusClass?`<span class="badge ${statusClass}">${status}</span>`:status}</td></tr>`;
       }
     }
     h+=`</tbody></table></div></div></div>`;
   }
-
   el.innerHTML=h;
 
-  // Draw charts
+  // Draw charts: 2 bars only — RO Target and Consolidated Accomplishment
   for(const prog of PROGRAMS){
     for(const sec of prog.sections){
       for(const item of sec.items){
         const canvas=document.getElementById('chart_'+item.key);
-        if(!canvas) continue;
-        const accVals=SDO_LIST.map(s=>allData[s]?.[item.key]?.acc??0);
-        const tgtVals=SDO_LIST.map(s=>allData[s]?.[item.key]?.target??null);
-        const roTgtVal=roTgt(item.key);
-        const datasets=[{
-          label:'Accomplishment',
-          data:accVals,
-          backgroundColor:SDO_LIST.map((_,i)=>`hsla(${200+i*10},70%,50%,0.7)`),
-          borderRadius:4
-        }];
-        if(tgtVals.some(v=>v!==null)){
-          datasets.push({label:'Target',data:tgtVals,type:'line',borderColor:'#f59e0b',
-            borderWidth:2,pointRadius:3,fill:false,tension:.3});
-        }
-        if(roTgtVal!=null){
-          datasets.push({label:'RO Target',data:Array(12).fill(roTgtVal),type:'line',
-            borderColor:'#dc2626',borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false});
-        }
+        if(!canvas)continue;
+        const pct=item.unit==='%';
+        const regVal=pct?SDO_LIST.map(s=>allData[s]?.[item.key]?.acc).filter(v=>v!=null).reduce((a,b,_,arr)=>a+b/arr.length,0)
+                        :SDO_LIST.reduce((s,sdo)=>s+(allData[sdo]?.[item.key]?.acc||0),0);
+        const roVal=roTgt(item.key)??0;
         new Chart(canvas,{
           type:'bar',
-          data:{labels:SDO_LIST,datasets},
-          options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:10}}},
-            scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}},beginAtZero:true}}}
+          data:{
+            labels:['RO Target','Consolidated Accomplishment'],
+            datasets:[{
+              data:[roVal,regVal],
+              backgroundColor:['rgba(220,38,38,0.7)','rgba(26,86,219,0.75)'],
+              borderColor:['#dc2626','#1a56db'],
+              borderWidth:1.5,
+              borderRadius:5
+            }]
+          },
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{display:false},
+              tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toFixed(pct?1:0)}${item.unit==='%'?'%':''}`}}
+            },
+            scales:{
+              x:{ticks:{font:{size:11},color:'#374151'}},
+              y:{beginAtZero:true,ticks:{font:{size:10}}}
+            }
+          }
         });
       }
     }
   }
 }
+function setQFilter(q){currentQFilter=q;renderPage(currentPage);}
 
-function setQFilter(q){ currentQFilter=q; renderPage(currentPage); }
-
-// ===================== ADMIN SDO VIEW =====================
+// ---- ADMIN SDO VIEW ----
 async function renderAdminSDOView(el){
-  let h=`<div class="page-header"><div class="page-title">📋 SDO Submissions</div><div class="page-sub">Status overview per SDO and quarter</div></div>
-  <div class="sdo-grid">`;
+  let h=`<div class="page-header"><div class="page-title">📋 SDO Submissions</div><div class="page-sub">Click any SDO to view details</div></div><div class="sdo-grid">`;
   for(const sdo of SDO_LIST){
     const submittedQ=[];
-    for(const q of QUARTERS){
-      const d=await fetchSDOData(sdo,q);
-      if(Object.keys(d).length>0) submittedQ.push(q);
-    }
+    for(const q of QUARTERS){const d=await fetchSDOData(sdo,q);if(Object.keys(d).length>0)submittedQ.push(q);}
     const cls=submittedQ.length===4?'submitted':submittedQ.length>0?'partial':'';
     h+=`<div class="sdo-card ${cls}" onclick="showSDODetail('${sdo}')">
       <div class="sdo-name">${SDO_NAMES[sdo]}</div>
       <div style="font-size:11px;color:#6b7280;margin-bottom:8px">${sdo}</div>
-      <div class="sdo-quarters">
-        ${QUARTERS.map(q=>`<span class="q-pill ${submittedQ.includes(q)?'done':''}">${q}</span>`).join('')}
-      </div>
+      <div class="sdo-quarters">${QUARTERS.map(q=>`<span class="q-pill ${submittedQ.includes(q)?'done':''}">${q}</span>`).join('')}</div>
     </div>`;
   }
   h+=`</div><div id="sdo-detail-area" style="margin-top:24px"></div>`;
   el.innerHTML=h;
 }
-
 async function showSDODetail(sdo){
   const area=document.getElementById('sdo-detail-area');
-  area.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
-  let h=`<div class="card"><div class="card-head"><h3>${SDO_NAMES[sdo]} – Detailed Data</h3></div><div class="card-body">
-  <div class="tab-bar">
-    ${QUARTERS.map(q=>`<button class="tab-btn" onclick="loadSDODetailQ('${sdo}','${q}',this)">${q}</button>`).join('')}
-  </div>
-  <div id="sdo-detail-table-${sdo}">Select a quarter above.</div>
-  </div></div>`;
-  area.innerHTML=h;
+  area.innerHTML=`<div class="card"><div class="card-head"><h3>${SDO_NAMES[sdo]} – Detailed Data</h3></div><div class="card-body">
+  <div class="tab-bar">${QUARTERS.map(q=>`<button class="tab-btn" onclick="loadSDODetailQ('${sdo}','${q}',this)">${q}</button>`).join('')}</div>
+  <div id="sdo-detail-table-${sdo}">Select a quarter above.</div></div></div>`;
 }
-
-async function loadSDODetailQ(sdo, quarter, btn){
-  document.querySelectorAll(`#sdo-detail-area .tab-btn`).forEach(b=>b.classList.remove('active'));
+async function loadSDODetailQ(sdo,quarter,btn){
+  document.querySelectorAll('#sdo-detail-area .tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const data=await fetchSDOData(sdo,quarter);
-  const target_div=document.getElementById(`sdo-detail-table-${sdo}`);
-  let h=`<div class="tbl-wrap"><table><thead><tr><th>Indicator</th><th>Target</th><th>Accomplishment</th><th>Variance</th></tr></thead><tbody>`;
+  const remarks=await fetchRemarks(sdo,quarter);
+  const div=document.getElementById(`sdo-detail-table-${sdo}`);
+  let h=`<div class="tbl-wrap"><table><thead><tr><th>Indicator</th><th>Target</th><th>Accomplishment</th><th>Variance</th><th>Remarks</th></tr></thead><tbody>`;
   for(const prog of PROGRAMS){
-    h+=`<tr class="prog-header"><td colspan="4">${prog.label}</td></tr>`;
+    h+=`<tr class="prog-header"><td colspan="5">${prog.label}</td></tr>`;
     for(const sec of prog.sections){
-      h+=`<tr class="${sec.type==='outcome'?'outcome-header':'output-header'}"><td colspan="4">${sec.type==='outcome'?'OUTCOME':'OUTPUT'} INDICATORS</td></tr>`;
+      h+=`<tr class="${sec.type==='outcome'?'outcome-header':'output-header'}"><td colspan="5">${sec.type==='outcome'?'OUTCOME':'OUTPUT'} INDICATORS</td></tr>`;
       for(const item of sec.items){
         const d=data[item.key]||{};
-        const t=d.target??'—', a=d.acc??'—';
+        const t=d.target??'—',a=d.acc??'—';
         let vari='—',varCls='';
-        if(d.target!=null&&d.acc!=null){
-          const v=d.acc-d.target;
-          vari=(v>=0?'+':'')+v.toFixed(1);
-          varCls=v>=0?'var-pos':'var-neg';
-        }
-        h+=`<tr><td>${item.label}</td><td class="mono">${t}</td><td class="mono"><strong>${a}</strong></td><td class="mono ${varCls}">${vari}</td></tr>`;
+        if(d.target!=null&&d.acc!=null){const v=d.acc-d.target;vari=(v>=0?'+':'')+v.toFixed(1);varCls=v>=0?'var-pos':'var-neg';}
+        const rmk=remarks[item.key]||'';
+        h+=`<tr><td>${item.label}</td><td class="mono">${t}</td><td class="mono"><strong>${a}</strong></td>
+          <td class="mono ${varCls}">${vari}</td>
+          <td style="max-width:220px">${rmk?`<div class="remark-box">${escHtml(rmk)}</div>`:'<span style="color:#9ca3af;font-size:11px">—</span>'}</td></tr>`;
       }
     }
   }
   h+=`</tbody></table></div>`;
-  target_div.innerHTML=h;
+  div.innerHTML=h;
 }
 
-// ===================== ADMIN CONSOLIDATED TABLE =====================
+// ---- ADMIN CONSOLIDATED TABLE ----
 async function renderAdminConsolidated(el){
   const qtr=currentQFilter;
   let allData={};
-  for(const sdo of SDO_LIST){ allData[sdo]=await fetchSDOData(sdo,qtr); }
+  for(const sdo of SDO_LIST){allData[sdo]=await fetchSDOData(sdo,qtr);}
   const roT=await fetchROTargets(qtr);
-
   let h=`<div class="page-header"><div class="page-title">📑 Consolidated Table</div><div class="page-sub">All SDOs · All Indicators</div></div>
-  <div class="tab-bar">
-    ${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q} 2026</button>`).join('')}
-  </div>
-  <div class="tbl-wrap"><table>
-  <thead><tr>
-    <th style="min-width:260px">Indicator</th>
-    <th>RO Target</th>
-    ${SDO_LIST.map(s=>`<th>${s}</th>`).join('')}
-    <th>Regional Total/Avg</th>
-  </tr></thead><tbody>`;
-
+  <div class="tab-bar">${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q} 2026</button>`).join('')}</div>
+  <div class="tbl-wrap"><table><thead><tr><th style="min-width:240px">Indicator</th><th>RO Target</th>
+    ${SDO_LIST.map(s=>`<th>${s}</th>`).join('')}<th>Consolidated</th></tr></thead><tbody>`;
   for(const prog of PROGRAMS){
     h+=`<tr class="prog-header"><td colspan="${3+SDO_LIST.length}">${prog.label}</td></tr>`;
     for(const sec of prog.sections){
@@ -764,16 +617,14 @@ async function renderAdminConsolidated(el){
       for(const item of sec.items){
         const pct=item.unit==='%';
         const roVal=roT[item.key]??'—';
-        const sdoVals=SDO_LIST.map(s=>allData[s]?.[item.key]?.acc??'');
-        const nums=sdoVals.filter(v=>v!==''&&v!=null).map(Number);
+        const sdoVals=SDO_LIST.map(s=>allData[s]?.[item.key]?.acc);
+        const nums=sdoVals.filter(v=>v!=null).map(Number);
         let regVal='—';
-        if(nums.length>0) regVal=(pct?nums.reduce((a,b)=>a+b,0)/nums.length:nums.reduce((a,b)=>a+b,0)).toFixed(pct?1:0);
-        h+=`<tr>
-          <td>${item.label} <span style="color:#9ca3af;font-size:11px">(${item.unit})</span></td>
+        if(nums.length>0)regVal=(pct?nums.reduce((a,b)=>a+b,0)/nums.length:nums.reduce((a,b)=>a+b,0)).toFixed(pct?1:0);
+        h+=`<tr><td>${item.label} <span style="color:#9ca3af;font-size:11px">(${item.unit})</span></td>
           <td class="mono">${roVal!=='—'?Number(roVal).toLocaleString():roVal}</td>
-          ${sdoVals.map(v=>`<td class="mono">${v!==''?Number(v).toLocaleString():'—'}</td>`).join('')}
-          <td class="mono"><strong>${regVal}</strong></td>
-        </tr>`;
+          ${sdoVals.map(v=>`<td class="mono">${v!=null?Number(v).toLocaleString():'—'}</td>`).join('')}
+          <td class="mono"><strong>${regVal}</strong></td></tr>`;
       }
     }
   }
@@ -781,74 +632,97 @@ async function renderAdminConsolidated(el){
   el.innerHTML=h;
 }
 
-// ===================== ADMIN RO TARGETS =====================
+// ---- ADMIN CONSOLIDATED REMARKS ----
+async function renderAdminRemarks(el){
+  const qtr=currentQFilter;
+  let h=`<div class="page-header"><div class="page-title">💬 Consolidated Remarks</div><div class="page-sub">All SDO explanations per indicator</div></div>
+  <div class="tab-bar">${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q} 2026</button>`).join('')}</div>`;
+
+  // Fetch all remarks
+  let allRemarks={};
+  for(const sdo of SDO_LIST){allRemarks[sdo]=await fetchRemarks(sdo,qtr);}
+
+  for(const prog of PROGRAMS){
+    h+=`<div class="card"><div class="card-head"><h3>${prog.label}</h3></div><div class="card-body">`;
+    for(const sec of prog.sections){
+      h+=`<span class="indicator-type ${sec.type==='outcome'?'outcome-lbl':'output-lbl'}">${sec.type==='outcome'?'Outcome':'Output'} Indicators</span>`;
+      for(const item of sec.items){
+        // Check if any SDO has a remark for this indicator
+        const hasAny=SDO_LIST.some(s=>allRemarks[s]?.[item.key]);
+        if(!hasAny)continue;
+        h+=`<div style="margin:12px 0;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+          <div style="font-size:12px;font-weight:700;color:#1240a0;margin-bottom:8px">${item.label}</div>`;
+        for(const sdo of SDO_LIST){
+          const rmk=allRemarks[sdo]?.[item.key];
+          if(!rmk)continue;
+          h+=`<div style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:3px">${SDO_NAMES[sdo]}</div>
+            <div class="remark-box">${escHtml(rmk)}</div>
+          </div>`;
+        }
+        h+=`</div>`;
+      }
+    }
+    h+=`</div></div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ---- ADMIN RO TARGETS ----
 async function renderAdminROTargets(el){
   const qtr=currentQFilter;
   const existing=await fetchROTargets(qtr);
-
   let h=`<div class="page-header"><div class="page-title">🎯 RO Annual Targets</div><div class="page-sub">Set regional targets for each quarter</div></div>
-  <div class="tab-bar">
-    ${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q}</button>`).join('')}
-  </div>
+  <div class="tab-bar">${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q}</button>`).join('')}</div>
   <div id="ro-save-msg"></div>
   <div class="card"><div class="card-head"><h3>RO Targets — ${qtr} 2026</h3>
     <button class="btn btn-primary" onclick="saveROTargets('${qtr}')">💾 Save All Targets</button>
   </div><div class="card-body">`;
-
   for(const prog of PROGRAMS){
     h+=`<div class="prog-section-lbl">${prog.label}</div>`;
     for(const sec of prog.sections){
       h+=`<span class="indicator-type ${sec.type==='outcome'?'outcome-lbl':'output-lbl'}">${sec.type==='outcome'?'Outcome':'Output'} Indicators</span>`;
       for(const item of sec.items){
         const v=existing[item.key]??'';
-        h+=`<div class="form-section" style="margin-bottom:8px">
-          <div style="font-size:12px;color:#374151;margin-bottom:4px">${item.label} <span style="color:#9ca3af">(${item.unit})</span></div>
+        h+=`<div style="margin-bottom:8px"><div style="font-size:12px;color:#374151;margin-bottom:4px">${item.label} <span style="color:#9ca3af">(${item.unit})</span></div>
           <input type="number" step="any" id="ro_${item.key}" value="${v}" placeholder="Enter target"
-            style="width:220px;border:1.5px solid #d1d5db;border-radius:5px;padding:6px 10px;font-size:13px;font-family:var(--font)"/>
-        </div>`;
+            style="width:220px;border:1.5px solid #d1d5db;border-radius:5px;padding:6px 10px;font-size:13px;font-family:var(--font)"/></div>`;
       }
     }
   }
   h+=`</div></div>`;
   el.innerHTML=h;
 }
-
 async function saveROTargets(qtr){
   const msg=document.getElementById('ro-save-msg');
   msg.innerHTML=`<div class="alert alert-info">Saving…</div>`;
   const rows=[];
-  for(const p of PROGRAMS)
-    for(const s of p.sections)
-      for(const i of s.items){
-        const v=document.getElementById('ro_'+i.key)?.value;
-        if(v!=='') rows.push({sdo_code:'RO',quarter:qtr,field_key:i.key,field_value:parseFloat(v)||0,updated_at:new Date().toISOString()});
-      }
-  const {error}=await db.from('bar1_targets').upsert(rows,{onConflict:'sdo_code,quarter,field_key'});
-  if(error) msg.innerHTML=`<div class="alert alert-error">Error: ${error.message}</div>`;
-  else msg.innerHTML=`<div class="alert alert-success">✓ RO Targets for ${qtr} saved successfully!</div>`;
+  for(const p of PROGRAMS)for(const s of p.sections)for(const i of s.items){
+    const v=document.getElementById('ro_'+i.key)?.value;
+    if(v!=='')rows.push({sdo_code:'RO',quarter:qtr,field_key:i.key,field_value:parseFloat(v)||0,updated_at:new Date().toISOString()});
+  }
+  const{error}=await db.from('bar1_targets').upsert(rows,{onConflict:'sdo_code,quarter,field_key'});
+  msg.innerHTML=error?`<div class="alert alert-error">Error: ${error.message}</div>`:`<div class="alert alert-success">✓ RO Targets for ${qtr} saved!</div>`;
   setTimeout(()=>msg.innerHTML='',3000);
 }
 
-// ===================== ADMIN EDIT SDO =====================
+// ---- ADMIN EDIT ----
 async function renderAdminEdit(el){
   let h=`<div class="page-header"><div class="page-title">✏️ Edit SDO Data</div><div class="page-sub">Correct any SDO entry</div></div>
   <div class="card"><div class="card-body">
     <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px">
       <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">SDO</label>
         <select id="editSDO" style="padding:7px 12px;border:1.5px solid #d1d5db;border-radius:5px;font-family:var(--font)">
-          ${SDO_LIST.map(s=>`<option value="${s}">${SDO_NAMES[s]}</option>`).join('')}
-        </select></div>
+          ${SDO_LIST.map(s=>`<option value="${s}">${SDO_NAMES[s]}</option>`).join('')}</select></div>
       <div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Quarter</label>
         <select id="editQ" style="padding:7px 12px;border:1.5px solid #d1d5db;border-radius:5px;font-family:var(--font)">
-          ${QUARTERS.map(q=>`<option>${q}</option>`).join('')}
-        </select></div>
+          ${QUARTERS.map(q=>`<option>${q}</option>`).join('')}</select></div>
       <button class="btn btn-outline" onclick="loadEditForm()">Load Data</button>
     </div>
     <div id="edit-form-area"><div class="alert alert-info">Select an SDO and quarter, then click Load Data.</div></div>
   </div></div>`;
   el.innerHTML=h;
 }
-
 async function loadEditForm(){
   const sdo=document.getElementById('editSDO').value;
   const qtr=document.getElementById('editQ').value;
@@ -856,6 +730,7 @@ async function loadEditForm(){
   area.innerHTML=`<div class="loading"><div class="spinner"></div></div>`;
   delete dbCache[cacheKey(sdo,qtr)];
   const existing=await fetchSDOData(sdo,qtr);
+  const existingRmk=await fetchRemarks(sdo,qtr);
   let h=`<div id="edit-save-msg"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
     <strong>${SDO_NAMES[sdo]} – ${qtr}</strong>
@@ -867,111 +742,144 @@ async function loadEditForm(){
       h+=`<span class="indicator-type ${sec.type==='outcome'?'outcome-lbl':'output-lbl'}">${sec.type==='outcome'?'Outcome':'Output'}</span>`;
       for(const item of sec.items){
         const d=existing[item.key]||{};
-        h+=`<div style="margin-bottom:8px">
-          <div style="font-size:12px;color:#374151;margin-bottom:4px">${item.label}</div>
+        const rmk=existingRmk[item.key]||'';
+        h+=`<div style="margin-bottom:10px;padding:10px;background:#fafafa;border-radius:6px;border:1px solid #e5e7eb">
+          <div style="font-size:12px;color:#374151;margin-bottom:6px;font-weight:500">${item.label} <span style="color:#9ca3af">(${item.unit})</span></div>
           <div class="field-row">
-            <div class="field-group target">
-              <label>Target</label>
-              <input type="number" step="any" id="et_${item.key}" value="${d.target??''}"/>
-            </div>
-            <div class="field-group accomplishment">
-              <label>Accomplishment</label>
-              <input type="number" step="any" id="ea_${item.key}" value="${d.acc??''}"/>
-            </div>
+            <div class="field-group target"><label>Target</label><input type="number" step="any" id="et_${item.key}" value="${d.target??''}"/></div>
+            <div class="field-group accomplishment"><label>Accomplishment</label><input type="number" step="any" id="ea_${item.key}" value="${d.acc??''}"/></div>
           </div>
+          <div style="margin-top:6px"><label style="font-size:11px;font-weight:600;color:#4f46e5;display:block;margin-bottom:3px">Remarks / Explanation</label>
+          <textarea id="er_${item.key}" placeholder="SDO remarks for this indicator…" style="width:100%;border:1.5px solid #e0e7ff;border-radius:5px;padding:7px 10px;font-size:12px;font-family:var(--font);resize:vertical;min-height:50px">${escHtml(rmk)}</textarea></div>
         </div>`;
       }
     }
   }
   area.innerHTML=h;
 }
-
 async function saveEditForm(sdo,qtr){
   const msg=document.getElementById('edit-save-msg');
   msg.innerHTML=`<div class="alert alert-info">Saving…</div>`;
-  const vals={};
-  for(const p of PROGRAMS)
-    for(const s of p.sections)
-      for(const i of s.items){
-        const t=document.getElementById('et_'+i.key)?.value??'';
-        const a=document.getElementById('ea_'+i.key)?.value??'';
-        vals[i.key]={target:t,acc:a};
-      }
+  const vals={},remarksObj={};
+  for(const p of PROGRAMS)for(const s of p.sections)for(const i of s.items){
+    vals[i.key]={target:document.getElementById('et_'+i.key)?.value??'',acc:document.getElementById('ea_'+i.key)?.value??''};
+    const r=document.getElementById('er_'+i.key)?.value??'';
+    if(r.trim())remarksObj[i.key]=r.trim();
+  }
   await saveAllFields(sdo,qtr,vals);
+  await saveRemarks(sdo,qtr,remarksObj);
   msg.innerHTML=`<div class="alert alert-success">✓ Saved successfully!</div>`;
   setTimeout(()=>msg.innerHTML='',3000);
 }
 
-// ===================== ADMIN PDF VIEW =====================
+// ---- ADMIN ENCODING CONTROL ----
+async function renderAdminEncodeControl(el){
+  const ctrl=await fetchEncodeControl();
+  let h=`<div class="page-header"><div class="page-title">🔒 Encoding Control</div><div class="page-sub">Enable or disable SDO data encoding per quarter</div></div>
+  <div class="card"><div class="card-head"><h3>Quarterly Encoding Windows</h3></div><div class="card-body">
+  <div class="alert alert-info" style="margin-bottom:16px">When a quarter is <strong>OPEN</strong>, SDOs can encode their targets and accomplishments. When <strong>CLOSED</strong>, the encoding form is locked — SDOs can still view their previously submitted data.</div>`;
+  for(const q of QUARTERS){
+    h+=`<div class="toggle-row">
+      <div><div class="toggle-label">${q} 2026 Encoding Window</div>
+      <div style="font-size:12px;color:#6b7280;margin-top:2px">${ctrl[q]?'<span style="color:#059669;font-weight:600">● Open — SDOs can encode</span>':'<span style="color:#9ca3af">● Closed — encoding locked</span>'}</div></div>
+      <label class="toggle-switch"><input type="checkbox" ${ctrl[q]?'checked':''} onchange="toggleEncodeCtrl('${q}',this.checked)"/><span class="toggle-slider"></span></label>
+    </div>`;
+  }
+  h+=`<div id="enc-ctrl-msg" style="margin-top:12px"></div></div></div>`;
+  el.innerHTML=h;
+}
+async function toggleEncodeCtrl(quarter,enabled){
+  await setEncodeControl(quarter,enabled);
+  const msg=document.getElementById('enc-ctrl-msg');
+  if(msg)msg.innerHTML=`<div class="alert alert-success">✓ ${quarter} encoding ${enabled?'opened':'closed'}.</div>`;
+  setTimeout(()=>{if(msg)msg.innerHTML='';},2500);
+  // refresh toggle labels
+  renderPage('admin-encode-control');
+}
+
+// ---- ADMIN PDF CONTROL ----
+async function renderAdminPDFControl(el){
+  const ctrl=await fetchPDFControl();
+  let h=`<div class="page-header"><div class="page-title">⚙️ PDF Upload Control</div><div class="page-sub">Enable or disable PDF uploads per quarter</div></div>
+  <div class="card"><div class="card-head"><h3>Upload Window Settings</h3></div><div class="card-body">
+  <div class="alert alert-info" style="margin-bottom:16px">When ENABLED, SDOs will see the PDF upload form for that quarter.</div>`;
+  for(const q of QUARTERS){
+    h+=`<div class="toggle-row">
+      <div><div class="toggle-label">${q} 2026 Upload Window</div>
+      <div style="font-size:12px;color:#6b7280;margin-top:2px">${ctrl[q]?'<span style="color:#059669;font-weight:600">● Open</span>':'<span style="color:#9ca3af">● Closed</span>'}</div></div>
+      <label class="toggle-switch"><input type="checkbox" ${ctrl[q]?'checked':''} onchange="togglePDFCtrl('${q}',this.checked)"/><span class="toggle-slider"></span></label>
+    </div>`;
+  }
+  h+=`<div id="pdf-ctrl-msg" style="margin-top:12px"></div></div></div>`;
+  el.innerHTML=h;
+}
+async function togglePDFCtrl(quarter,enabled){
+  await setPDFControl(quarter,enabled);
+  const msg=document.getElementById('pdf-ctrl-msg');
+  if(msg)msg.innerHTML=`<div class="alert alert-success">✓ ${quarter} upload window ${enabled?'opened':'closed'}.</div>`;
+  setTimeout(()=>{if(msg)msg.innerHTML='';},2500);
+}
+
+// ---- ADMIN PDF VIEW ----
 async function renderAdminPDFView(el){
   const uploads=await fetchPDFUploads();
   let h=`<div class="page-header"><div class="page-title">📎 Uploaded PDFs</div><div class="page-sub">All SDO PDF submissions</div></div>`;
-  if(!uploads.length){ h+=`<div class="alert alert-info">No PDFs uploaded yet.</div>`; el.innerHTML=h; return; }
-
-  // Group by SDO
-  const bySDO={};
-  uploads.forEach(u=>{ if(!bySDO[u.sdo_code]) bySDO[u.sdo_code]=[]; bySDO[u.sdo_code].push(u); });
-
-  for(const [sdo,files] of Object.entries(bySDO)){
-    h+=`<div class="card"><div class="card-head"><h3>${SDO_NAMES[sdo]||sdo}</h3></div><div class="card-body">`;
-    h+=`<div class="tbl-wrap"><table><thead><tr><th>Quarter</th><th>File Name</th><th>Uploaded</th><th>Action</th></tr></thead><tbody>`;
+  if(!uploads.length){h+=`<div class="alert alert-info">No PDFs uploaded yet.</div>`;el.innerHTML=h;return;}
+  const bySDO={};uploads.forEach(u=>{if(!bySDO[u.sdo_code])bySDO[u.sdo_code]=[];bySDO[u.sdo_code].push(u);});
+  for(const[sdo,files]of Object.entries(bySDO)){
+    h+=`<div class="card"><div class="card-head"><h3>${SDO_NAMES[sdo]||sdo}</h3></div><div class="card-body">
+    <div class="tbl-wrap"><table><thead><tr><th>Quarter</th><th>File Name</th><th>Uploaded</th><th>Action</th></tr></thead><tbody>`;
     files.forEach(f=>{
       const url=`${SUPA_URL}/storage/v1/object/public/bar1-uploads/${f.file_path}`;
-      h+=`<tr><td><span class="badge badge-blue">${f.quarter}</span></td>
-          <td>${f.file_name}</td>
-          <td>${new Date(f.uploaded_at).toLocaleString()}</td>
-          <td><a href="${url}" target="_blank" class="btn btn-sm btn-outline">View PDF</a></td></tr>`;
+      h+=`<tr><td><span class="badge badge-blue">${f.quarter}</span></td><td>${f.file_name}</td>
+        <td>${new Date(f.uploaded_at).toLocaleString()}</td>
+        <td><a href="${url}" target="_blank" class="btn btn-sm btn-outline">View PDF</a></td></tr>`;
     });
     h+=`</tbody></table></div></div></div>`;
   }
   el.innerHTML=h;
 }
 
-// ===================== ADMIN PDF CONTROL =====================
-async function renderAdminPDFControl(el){
-  const ctrl=await fetchPDFControl();
-  let h=`<div class="page-header"><div class="page-title">⚙️ PDF Upload Control</div><div class="page-sub">Enable or disable PDF uploads per quarter</div></div>
-  <div class="card"><div class="card-head"><h3>Upload Window Settings</h3></div><div class="card-body">
-  <div class="alert alert-info" style="margin-bottom:16px">When a quarter is ENABLED, the corresponding SDOs will see the PDF upload form for that quarter. When DISABLED, the upload option is hidden.</div>`;
-  for(const q of QUARTERS){
-    h+=`<div class="toggle-row">
-      <div>
-        <div class="toggle-label">${q} 2026 Upload Window</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:2px">${ctrl[q]?'<span style="color:#059669;font-weight:600">● Open</span>':'<span style="color:#9ca3af">● Closed</span>'}</div>
-      </div>
-      <label class="toggle-switch">
-        <input type="checkbox" ${ctrl[q]?'checked':''} onchange="togglePDFCtrl('${q}',this.checked)"/>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>`;
-  }
-  h+=`<div id="pdf-ctrl-msg" style="margin-top:12px"></div>
-  </div></div>`;
-  el.innerHTML=h;
-}
-
-async function togglePDFCtrl(quarter, enabled){
-  await setPDFControl(quarter,enabled);
-  const msg=document.getElementById('pdf-ctrl-msg');
-  if(msg) msg.innerHTML=`<div class="alert alert-success">✓ ${quarter} upload window ${enabled?'opened':'closed'}.</div>`;
-  setTimeout(()=>{ if(msg) msg.innerHTML=''; },2500);
-}
-
-// ===================== SDO ENCODE =====================
+// ---- SDO ENCODE ----
 async function renderSDOEncode(el){
   const sdo=currentUser.sdo;
   const qtr=currentQFilter;
+  const encCtrl=await fetchEncodeControl();
+  const isOpen=encCtrl[qtr];
   const existing=await fetchSDOData(sdo,qtr);
+  const existingRmk=await fetchRemarks(sdo,qtr);
 
   let h=`<div class="page-header"><div class="page-title">📝 Encode Data</div><div class="page-sub">${SDO_NAMES[sdo]} · CY 2026</div></div>
-  <div class="tab-bar">
-    ${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q}</button>`).join('')}
-  </div>
-  <div id="encode-msg"></div>
+  <div class="tab-bar">${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q}</button>`).join('')}</div>`;
+
+  if(!isOpen){
+    h+=`<div class="locked-notice">🔒 The encoding window for <strong>${qtr} 2026</strong> is currently <strong>closed</strong>. Please wait for the Regional Office to open the encoding period. You may still view your previously submitted data below.</div>`;
+    // Read-only summary
+    if(Object.keys(existing).length){
+      h+=`<div class="card"><div class="card-head"><h3>Submitted Data — ${qtr} 2026 (Read-only)</h3></div><div class="card-body">
+      <div class="tbl-wrap"><table><thead><tr><th>Indicator</th><th>Target</th><th>Accomplishment</th><th>Remarks</th></tr></thead><tbody>`;
+      for(const prog of PROGRAMS){
+        h+=`<tr class="prog-header"><td colspan="4">${prog.label}</td></tr>`;
+        for(const sec of prog.sections){
+          h+=`<tr class="${sec.type==='outcome'?'outcome-header':'output-header'}"><td colspan="4">${sec.type==='outcome'?'OUTCOME':'OUTPUT'} INDICATORS</td></tr>`;
+          for(const item of sec.items){
+            const d=existing[item.key]||{};
+            const rmk=existingRmk[item.key]||'';
+            h+=`<tr><td>${item.label}</td><td class="mono">${d.target??'—'}</td><td class="mono">${d.acc??'—'}</td>
+              <td style="max-width:200px">${rmk?`<div class="remark-box">${escHtml(rmk)}</div>`:'—'}</td></tr>`;
+          }
+        }
+      }
+      h+=`</tbody></table></div></div></div>`;
+    }
+    el.innerHTML=h;return;
+  }
+
+  h+=`<div id="encode-msg"></div>
   <div class="card"><div class="card-head"><h3>${sdo} – ${qtr} 2026 BAR 1 Data</h3>
     <button class="btn btn-success" onclick="saveEncodeForm('${sdo}','${qtr}')">☁️ Save ${qtr} Data to Cloud</button>
   </div><div class="card-body">
-  <div class="field-header" style="margin-bottom:8px;max-width:440px">
+  <div class="field-header" style="max-width:440px;margin-bottom:8px">
     <span class="th-target">📌 Target</span><span class="th-acc">✅ Accomplishment</span>
   </div>`;
 
@@ -981,24 +889,20 @@ async function renderSDOEncode(el){
       h+=`<span class="indicator-type ${sec.type==='outcome'?'outcome-lbl':'output-lbl'}">${sec.type==='outcome'?'Outcome':'Output'} Indicators</span>`;
       for(const item of sec.items){
         const d=existing[item.key]||{};
-        h+=`<div style="margin-bottom:10px;padding:8px;background:#fafafa;border-radius:6px;border:1px solid #e5e7eb">
+        const rmk=existingRmk[item.key]||'';
+        h+=`<div style="margin-bottom:12px;padding:10px;background:#fafafa;border-radius:6px;border:1px solid #e5e7eb">
           <div style="font-size:12px;color:#374151;margin-bottom:6px;font-weight:500">${item.label} <span style="color:#9ca3af">(${item.unit})</span></div>
           <div class="field-row">
-            <div class="field-group target">
-              <label>Target</label>
-              <input type="number" step="any" id="t_${item.key}" value="${d.target??''}" placeholder="0"/>
-            </div>
-            <div class="field-group accomplishment">
-              <label>Accomplishment</label>
-              <input type="number" step="any" id="a_${item.key}" value="${d.acc??''}" placeholder="0"/>
-            </div>
+            <div class="field-group target"><label>Target</label><input type="number" step="any" id="t_${item.key}" value="${d.target??''}" placeholder="0"/></div>
+            <div class="field-group accomplishment"><label>Accomplishment</label><input type="number" step="any" id="a_${item.key}" value="${d.acc??''}" placeholder="0"/></div>
           </div>
+          <div style="margin-top:6px"><label style="font-size:11px;font-weight:600;color:#4f46e5;display:block;margin-bottom:3px">💬 Remarks / Explanation</label>
+          <textarea id="r_${item.key}" placeholder="Explain your accomplishment, challenges encountered, or other relevant information…" style="width:100%;border:1.5px solid #e0e7ff;border-radius:5px;padding:7px 10px;font-size:12px;font-family:var(--font);resize:vertical;min-height:52px;background:#f5f7ff">${escHtml(rmk)}</textarea></div>
         </div>`;
       }
     }
   }
-  h+=`</div></div>
-  <div style="text-align:right;margin-top:8px">
+  h+=`</div></div><div style="text-align:right;margin-top:8px">
     <button class="btn btn-success" onclick="saveEncodeForm('${sdo}','${qtr}')">☁️ Save ${qtr} Data to Cloud</button>
   </div>`;
   el.innerHTML=h;
@@ -1007,52 +911,47 @@ async function renderSDOEncode(el){
 async function saveEncodeForm(sdo,qtr){
   const msg=document.getElementById('encode-msg');
   msg.innerHTML=`<div class="alert alert-info">Saving to cloud…</div>`;
-  const vals={};
-  for(const p of PROGRAMS)
-    for(const s of p.sections)
-      for(const i of s.items){
-        const t=document.getElementById('t_'+i.key)?.value??'';
-        const a=document.getElementById('a_'+i.key)?.value??'';
-        vals[i.key]={target:t,acc:a};
-      }
-  const {error}=await saveAllFields(sdo,qtr,vals).then(()=>({error:null})).catch(e=>({error:e}));
-  if(error) msg.innerHTML=`<div class="alert alert-error">Error saving. Please try again.</div>`;
-  else msg.innerHTML=`<div class="alert alert-success">✓ Data saved to cloud successfully!</div>`;
+  const vals={},remarksObj={};
+  for(const p of PROGRAMS)for(const s of p.sections)for(const i of s.items){
+    vals[i.key]={target:document.getElementById('t_'+i.key)?.value??'',acc:document.getElementById('a_'+i.key)?.value??''};
+    const r=document.getElementById('r_'+i.key)?.value??'';
+    if(r.trim())remarksObj[i.key]=r.trim();
+  }
+  try{
+    await saveAllFields(sdo,qtr,vals);
+    await saveRemarks(sdo,qtr,remarksObj);
+    msg.innerHTML=`<div class="alert alert-success">✓ Data saved to cloud successfully!</div>`;
+  }catch(e){
+    msg.innerHTML=`<div class="alert alert-error">Error saving. Please try again.</div>`;
+  }
   setTimeout(()=>msg.innerHTML='',3000);
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// ===================== SDO SUMMARY =====================
+// ---- SDO SUMMARY ----
 async function renderSDOSummary(el){
   const sdo=currentUser.sdo;
   const qtr=currentQFilter;
   const data=await fetchSDOData(sdo,qtr);
+  const remarks=await fetchRemarks(sdo,qtr);
   let h=`<div class="page-header"><div class="page-title">📊 My Summary</div><div class="page-sub">${SDO_NAMES[sdo]}</div></div>
-  <div class="tab-bar">
-    ${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q}</button>`).join('')}
-  </div>`;
-  if(!Object.keys(data).length){ h+=`<div class="alert alert-warning">No data encoded yet for ${qtr}.</div>`; el.innerHTML=h; return; }
-
-  h+=`<div class="tbl-wrap"><table><thead><tr><th>Indicator</th><th>Target</th><th>Accomplishment</th><th>Variance</th><th>Status</th></tr></thead><tbody>`;
+  <div class="tab-bar">${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q}</button>`).join('')}</div>`;
+  if(!Object.keys(data).length){h+=`<div class="alert alert-warning">No data encoded yet for ${qtr}.</div>`;el.innerHTML=h;return;}
+  h+=`<div class="tbl-wrap"><table><thead><tr><th>Indicator</th><th>Target</th><th>Accomplishment</th><th>Variance</th><th>Status</th><th>Remarks</th></tr></thead><tbody>`;
   for(const prog of PROGRAMS){
-    h+=`<tr class="prog-header"><td colspan="5">${prog.label}</td></tr>`;
+    h+=`<tr class="prog-header"><td colspan="6">${prog.label}</td></tr>`;
     for(const sec of prog.sections){
-      h+=`<tr class="${sec.type==='outcome'?'outcome-header':'output-header'}"><td colspan="5">${sec.type==='outcome'?'OUTCOME':'OUTPUT'} INDICATORS</td></tr>`;
+      h+=`<tr class="${sec.type==='outcome'?'outcome-header':'output-header'}"><td colspan="6">${sec.type==='outcome'?'OUTCOME':'OUTPUT'} INDICATORS</td></tr>`;
       for(const item of sec.items){
         const d=data[item.key]||{};
-        const t=d.target, a=d.acc;
+        const t=d.target,a=d.acc;
         let vari='—',varCls='',status='—',stCls='';
-        if(t!=null&&a!=null){
-          const v=a-t;
-          vari=(v>=0?'+':'')+v.toFixed(1);
-          varCls=v>=0?'var-pos':'var-neg';
-          if(v>=0){status='✓ Met';stCls='badge-green';}else{status='✗ Below';stCls='badge-red';}
-        }
-        h+=`<tr><td>${item.label}</td>
-          <td class="mono">${t!=null?t:'—'}</td>
-          <td class="mono"><strong>${a!=null?a:'—'}</strong></td>
+        if(t!=null&&a!=null){const v=a-t;vari=(v>=0?'+':'')+v.toFixed(1);varCls=v>=0?'var-pos':'var-neg';if(v>=0){status='✓ Met';stCls='badge-green';}else{status='✗ Below';stCls='badge-red';}}
+        const rmk=remarks[item.key]||'';
+        h+=`<tr><td>${item.label}</td><td class="mono">${t??'—'}</td><td class="mono"><strong>${a??'—'}</strong></td>
           <td class="mono ${varCls}">${vari}</td>
-          <td>${stCls?`<span class="badge ${stCls}">${status}</span>`:status}</td></tr>`;
+          <td>${stCls?`<span class="badge ${stCls}">${status}</span>`:status}</td>
+          <td style="max-width:200px">${rmk?`<div class="remark-box">${escHtml(rmk)}</div>`:'—'}</td></tr>`;
       }
     }
   }
@@ -1060,28 +959,23 @@ async function renderSDOSummary(el){
   el.innerHTML=h;
 }
 
-// ===================== SDO REGIONAL TOTALS =====================
+// ---- SDO REGIONAL TOTALS ----
 async function renderSDORegional(el){
   const qtr=currentQFilter;
   let allData={};
-  for(const sdo of SDO_LIST){ allData[sdo]=await fetchSDOData(sdo,qtr); }
-
-  let h=`<div class="page-header"><div class="page-title">🌏 Regional Totals</div><div class="page-sub">Aggregated data across all 12 SDOs</div></div>
-  <div class="tab-bar">
-    ${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q}</button>`).join('')}
-  </div>
+  for(const sdo of SDO_LIST){allData[sdo]=await fetchSDOData(sdo,qtr);}
+  let h=`<div class="page-header"><div class="page-title">🌏 Regional Totals</div><div class="page-sub">Aggregated data – individual SDO data not shown</div></div>
+  <div class="tab-bar">${QUARTERS.map(q=>`<button class="tab-btn ${q===qtr?'active':''}" onclick="setQFilter('${q}')">${q}</button>`).join('')}</div>
   <div class="tbl-wrap"><table><thead><tr><th>Indicator</th><th>Unit</th><th>Regional Total/Avg</th></tr></thead><tbody>`;
-
   for(const prog of PROGRAMS){
     h+=`<tr class="prog-header"><td colspan="3">${prog.label}</td></tr>`;
     for(const sec of prog.sections){
       h+=`<tr class="${sec.type==='outcome'?'outcome-header':'output-header'}"><td colspan="3">${sec.type==='outcome'?'OUTCOME':'OUTPUT'} INDICATORS</td></tr>`;
       for(const item of sec.items){
         const pct=item.unit==='%';
-        const nums=SDO_LIST.map(s=>allData[s]?.[item.key]?.acc).filter(v=>v!=null&&v!=='').map(Number);
+        const nums=SDO_LIST.map(s=>allData[s]?.[item.key]?.acc).filter(v=>v!=null).map(Number);
         const regVal=nums.length?(pct?nums.reduce((a,b)=>a+b,0)/nums.length:nums.reduce((a,b)=>a+b,0)):null;
-        h+=`<tr><td>${item.label}</td><td>${item.unit}</td>
-          <td class="mono"><strong>${regVal!=null?regVal.toFixed(pct?1:0):'—'}</strong></td></tr>`;
+        h+=`<tr><td>${item.label}</td><td>${item.unit}</td><td class="mono"><strong>${regVal!=null?regVal.toFixed(pct?1:0):'—'}</strong></td></tr>`;
       }
     }
   }
@@ -1089,33 +983,27 @@ async function renderSDORegional(el){
   el.innerHTML=h;
 }
 
-// ===================== SDO PDF UPLOAD =====================
+// ---- SDO PDF UPLOAD ----
 async function renderSDOUpload(el){
   const sdo=currentUser.sdo;
   const ctrl=await fetchPDFControl();
   const uploads=await fetchPDFUploads();
   const myUploads=uploads.filter(u=>u.sdo_code===sdo);
-
   let h=`<div class="page-header"><div class="page-title">📎 Upload BAR 1 PDF</div><div class="page-sub">${SDO_NAMES[sdo]}</div></div>`;
-
   for(const q of QUARTERS){
     const open=ctrl[q];
-    h+=`<div class="card"><div class="card-head"><h3>${q} 2026</h3>
-      <span class="badge ${open?'badge-green':'badge-amber'}">${open?'Upload Open':'Upload Closed'}</span>
-    </div><div class="card-body">`;
-    if(!open){
-      h+=`<div class="alert alert-warning">The admin has not yet opened the upload window for ${q}. Please wait or contact the Regional Office.</div>`;
-    } else {
+    h+=`<div class="card"><div class="card-head"><h3>${q} 2026</h3><span class="badge ${open?'badge-green':'badge-amber'}">${open?'Upload Open':'Upload Closed'}</span></div><div class="card-body">`;
+    if(!open){h+=`<div class="alert alert-warning">The admin has not yet opened the upload window for ${q}.</div>`;}
+    else{
       h+=`<div id="upload-msg-${q}"></div>
       <label class="upload-zone" for="pdf-inp-${q}">
         <input type="file" id="pdf-inp-${q}" accept=".pdf" multiple/>
         <div style="font-size:24px;margin-bottom:8px">📄</div>
         <div style="font-weight:600;color:#374151">Click to select PDF files</div>
-        <div style="font-size:12px;color:#6b7280;margin-top:4px">Approved BAR 1 for ${q} 2026</div>
+        <div id="pdf-names-${q}" style="font-size:12px;color:#6b7280;margin-top:4px">Approved BAR 1 for ${q} 2026</div>
       </label>
       <button class="btn btn-primary" style="margin-top:10px" onclick="uploadPDF('${sdo}','${q}')">⬆️ Upload Selected Files</button>`;
     }
-    // Existing uploads for this quarter
     const qFiles=myUploads.filter(u=>u.quarter===q);
     if(qFiles.length){
       h+=`<div class="uploaded-list"><strong style="font-size:12px">Uploaded files:</strong>`;
@@ -1128,37 +1016,34 @@ async function renderSDOUpload(el){
     h+=`</div></div>`;
   }
   el.innerHTML=h;
-  // Bind file inputs
   for(const q of QUARTERS){
     const inp=document.getElementById(`pdf-inp-${q}`);
-    if(inp) inp.addEventListener('change', ()=>{
-      const zone=inp.closest('.upload-zone');
+    if(inp)inp.addEventListener('change',()=>{
       const names=[...inp.files].map(f=>f.name).join(', ');
-      zone.querySelector('div:last-of-type').textContent=names||`Approved BAR 1 for ${q} 2026`;
+      const d=document.getElementById(`pdf-names-${q}`);
+      if(d)d.textContent=names||`Approved BAR 1 for ${q} 2026`;
     });
   }
 }
-
-async function uploadPDF(sdo, quarter){
+async function uploadPDF(sdo,quarter){
   const inp=document.getElementById(`pdf-inp-${quarter}`);
   const msg=document.getElementById(`upload-msg-${quarter}`);
-  if(!inp||!inp.files.length){ msg.innerHTML=`<div class="alert alert-warning">Please select at least one PDF file.</div>`; return; }
-  msg.innerHTML=`<div class="alert alert-info">Uploading…</div>`;
+  if(!inp||!inp.files.length){if(msg)msg.innerHTML=`<div class="alert alert-warning">Please select at least one PDF file.</div>`;return;}
+  if(msg)msg.innerHTML=`<div class="alert alert-info">Uploading…</div>`;
   for(const file of inp.files){
     const path=`${sdo}/${quarter}/${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
-    const {error:upErr}=await db.storage.from('bar1-uploads').upload(path,file,{contentType:'application/pdf'});
-    if(upErr){ msg.innerHTML=`<div class="alert alert-error">Upload error: ${upErr.message}</div>`; return; }
+    const{error:upErr}=await db.storage.from('bar1-uploads').upload(path,file,{contentType:'application/pdf'});
+    if(upErr){if(msg)msg.innerHTML=`<div class="alert alert-error">Upload error: ${upErr.message}</div>`;return;}
     await db.from('bar1_uploads').insert({sdo_code:sdo,quarter,file_name:file.name,file_path:path});
   }
-  pdfUploadsCache=[];
-  msg.innerHTML=`<div class="alert alert-success">✓ PDF(s) uploaded successfully!</div>`;
+  if(msg)msg.innerHTML=`<div class="alert alert-success">✓ PDF(s) uploaded successfully!</div>`;
   setTimeout(()=>navTo('sdo-upload'),1500);
 }
 
-// ===================== ENTER KEY LOGIN =====================
-document.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && document.getElementById('loginScreen').style.display!=='none') doLogin();
-});
+// ---- HELPERS ----
+function escHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
 </script>
 </body>
 </html>
