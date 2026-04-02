@@ -850,17 +850,22 @@ async function renderPDFCtrl(){
   await loadPDFControl();
   
   let html=`<div class="page-title">📄 PDF Upload Control</div>
-  <div class="page-sub">Enable or disable PDF uploads for each quarter.</div>
-  <div class="card">`;
+  <div class="page-sub">Toggle to open or close PDF uploads per quarter. When OPEN, SDOs can upload their BAR 1 PDF. When CLOSED, the upload form is hidden.</div>
+  <div class="msg" id="pcMsg"></div>
+  <div class="card" style="max-width:500px">`;
   
   ['Q1','Q2','Q3','Q4'].forEach(q=>{
     const isOpen=pdfControl[q]||false;
-    html+=`<div class="toggle-wrap">
-      <label class="toggle"><input type="checkbox" id="pc_${q}" ${isOpen?'checked':''} onchange="savePDFCtrl('${q}',this.checked)"></label>
-      <div>
-        <strong>${q} PDF Upload</strong><br>
-        <span class="badge ${isOpen?'badge-open':'badge-closed'}" id="pc_badge_${q}">${isOpen?'OPEN':'CLOSED'}</span>
+    html+=`<div class="toggle-wrap" style="padding:16px 0;border-bottom:1px solid var(--border)">
+      <label class="toggle">
+        <input type="checkbox" id="pc_${q}" ${isOpen?'checked':''} onchange="savePDFCtrl('${q}',this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700">${q} — PDF Upload</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="pc_desc_${q}">SDOs ${isOpen?'can':'cannot'} currently upload PDFs for ${q}</div>
       </div>
+      <span class="badge ${isOpen?'badge-open':'badge-closed'}" id="pc_badge_${q}" style="font-size:13px;padding:4px 12px">${isOpen?'OPEN':'CLOSED'}</span>
     </div>`;
   });
   html+=`</div>`;
@@ -883,12 +888,27 @@ async function renderPDFCtrl(){
 
 async function savePDFCtrl(q, val){
   const badge=document.getElementById(`pc_badge_${q}`);
-  await fetch(`${SUPABASE_URL}/rest/v1/bar1_settings`,{
-    method:'POST',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-    body:JSON.stringify({setting_key:`pdf_${q}`,setting_value:String(val)})
-  });
-  if(badge){badge.textContent=val?'OPEN':'CLOSED';badge.className=`badge ${val?'badge-open':'badge-closed'}`;}
+  const desc=document.getElementById(`pc_desc_${q}`);
+  const msg=document.getElementById('pcMsg');
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/bar1_settings`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'},
+      body:JSON.stringify({setting_key:`pdf_${q}`,setting_value:String(val)})
+    });
+    if(r.ok){
+      if(badge){badge.textContent=val?'OPEN':'CLOSED';badge.className=`badge ${val?'badge-open':'badge-closed'}`;}
+      if(desc) desc.textContent=`SDOs ${val?'can':'cannot'} currently upload PDFs for ${q}`;
+      pdfControl[q]=val;
+      if(msg){msg.textContent=`✓ ${q} PDF upload ${val?'opened':'closed'} successfully.`;msg.className='msg msg-success';msg.style.display='block';setTimeout(()=>msg.style.display='none',3000);}
+    } else {
+      throw new Error('Save failed — status '+r.status);
+    }
+  }catch(e){
+    if(msg){msg.textContent='❌ Error: '+e.message;msg.className='msg msg-error';msg.style.display='block';}
+    const el=document.getElementById(`pc_${q}`);
+    if(el) el.checked=!val;
+  }
 }
 
 // ============================================================
