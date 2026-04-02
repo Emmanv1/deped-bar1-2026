@@ -450,7 +450,7 @@ async function loadQuarterAssignments(){
 
 async function loadEncodingControl(){
   try{
-    const r=await sbGet('bar1_settings','?setting_key=like.encoding_%');
+    const r=await sbGet('bar1_settings','?setting_key=like.encoding_*');
     encodingControl={};
     (r||[]).forEach(x=>{const q=x.setting_key.replace('encoding_','');encodingControl[q]=x.setting_value==='true';});
   }catch(e){encodingControl={};}
@@ -458,7 +458,7 @@ async function loadEncodingControl(){
 
 async function loadPDFControl(){
   try{
-    const r=await sbGet('bar1_settings','?setting_key=like.pdf_%');
+    const r=await sbGet('bar1_settings','?setting_key=like.pdf_*');
     pdfControl={};
     (r||[]).forEach(x=>{const q=x.setting_key.replace('pdf_','');pdfControl[q]=x.setting_value==='true';});
   }catch(e){pdfControl={};}
@@ -563,7 +563,20 @@ function renderDashPrograms(selectedQ, dataMap, roMap){
         const assignedQ=quarterAssignments[ind.key]||'—';
         quarters.forEach(q=>{
           const roTarget=roMap[`${q}_${ind.key}`]||0;
-          const accomplishment=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_${q}_${ind.key}`]||0),0);
+          // Use cumulative aggregation: only show on the RO-assigned quarter
+          // If selectedQ is ALL, show for all quarters but only populate the assigned quarter with real data
+          const isAssignedQ=quarterAssignments[ind.key]===q;
+          // Accomplishment: sum/avg from all SDO quarters up to this one
+          let accomplishment=0;
+          if(isAssignedQ){
+            accomplishment=getConsolidatedAccomplishment(ind, dataMap);
+          } else if(selectedQ!=='ALL'){
+            // If user filtered to a specific quarter that isn't the assigned one, still show the indicator but with 0 data
+            accomplishment=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_${q}_${ind.key}`]||0),0);
+          } else {
+            // In ALL view, skip non-assigned quarters to avoid duplicate cards
+            return;
+          }
           const pct=roTarget>0?Math.min(100,Math.round(accomplishment/roTarget*100)):0;
           const met=accomplishment>=roTarget&&roTarget>0;
           const barId='bar_'+Math.random().toString(36).slice(2,8);
@@ -768,22 +781,27 @@ async function saveROTargets(){
 // ============================================================
 async function renderEncodingCtrl(){
   const mc=document.getElementById('mainContent');
-  mc.innerHTML=`<div class="page-title">🔒 Encoding Control</div><div class="page-sub">Enable or disable SDO data encoding per quarter.</div><div class="loading">Loading…</div>`;
+  mc.innerHTML=`<div class="page-title">🔒 Encoding Control</div><div class="page-sub">Enable or disable SDO data encoding per quarter.</div><div class="loading">Loading settings…</div>`;
   
   await loadEncodingControl();
   
   let html=`<div class="page-title">🔒 Encoding Control</div>
-  <div class="page-sub">Toggle to open or close data encoding for each quarter. SDOs can only encode when their quarter is OPEN.</div>
-  <div class="card">`;
+  <div class="page-sub">Toggle to open or close data encoding per quarter. When OPEN, SDOs can encode their data. When CLOSED, SDOs can only view previously saved data.</div>
+  <div class="msg" id="ecMsg"></div>
+  <div class="card" style="max-width:500px">`;
   
   ['Q1','Q2','Q3','Q4'].forEach(q=>{
     const isOpen=encodingControl[q]||false;
-    html+=`<div class="toggle-wrap">
-      <label class="toggle"><input type="checkbox" id="ec_${q}" ${isOpen?'checked':''} onchange="saveEncodingCtrl('${q}',this.checked)"></label>
-      <div>
-        <strong>${q} Encoding</strong><br>
-        <span class="badge ${isOpen?'badge-open':'badge-closed'}" id="ec_badge_${q}">${isOpen?'OPEN':'CLOSED'}</span>
+    html+=`<div class="toggle-wrap" style="padding:16px 0;border-bottom:1px solid var(--border)">
+      <label class="toggle">
+        <input type="checkbox" id="ec_${q}" ${isOpen?'checked':''} onchange="saveEncodingCtrl('${q}',this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700">${q} — Data Encoding</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">SDOs ${isOpen?'can':'cannot'} currently encode data for ${q}</div>
       </div>
+      <span class="badge ${isOpen?'badge-open':'badge-closed'}" id="ec_badge_${q}" style="font-size:13px;padding:4px 12px">${isOpen?'OPEN':'CLOSED'}</span>
     </div>`;
   });
   html+=`</div>`;
@@ -792,12 +810,28 @@ async function renderEncodingCtrl(){
 
 async function saveEncodingCtrl(q, val){
   const badge=document.getElementById(`ec_badge_${q}`);
-  await fetch(`${SUPABASE_URL}/rest/v1/bar1_settings`,{
-    method:'POST',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-    body:JSON.stringify({setting_key:`encoding_${q}`,setting_value:String(val)})
-  });
-  if(badge){badge.textContent=val?'OPEN':'CLOSED';badge.className=`badge ${val?'badge-open':'badge-closed'}`;}
+  const desc=document.querySelector(`#ec_${q}`)?.closest('.toggle-wrap')?.querySelector('div div:last-child');
+  const msg=document.getElementById('ecMsg');
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/bar1_settings`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'},
+      body:JSON.stringify({setting_key:`encoding_${q}`,setting_value:String(val)})
+    });
+    if(r.ok){
+      if(badge){badge.textContent=val?'OPEN':'CLOSED';badge.className=`badge ${val?'badge-open':'badge-closed'}`;}
+      if(desc) desc.textContent=`SDOs ${val?'can':'cannot'} currently encode data for ${q}`;
+      encodingControl[q]=val;
+      if(msg){msg.textContent=`✓ ${q} encoding ${val?'opened':'closed'} successfully.`;msg.className='msg msg-success';msg.style.display='block';setTimeout(()=>msg.style.display='none',3000);}
+    } else {
+      throw new Error('Save failed — status '+r.status);
+    }
+  }catch(e){
+    if(msg){msg.textContent='❌ Error: '+e.message;msg.className='msg msg-error';msg.style.display='block';}
+    // revert toggle
+    const el=document.getElementById(`ec_${q}`);
+    if(el) el.checked=!val;
+  }
 }
 
 // ============================================================
@@ -903,8 +937,26 @@ async function handleCorrection(id, status){
 }
 
 // ============================================================
-// PAGE: ENCODE DATA (SDO)
+// PAGE: ENCODE DATA (SDO) — with cumulative quarter logic
 // ============================================================
+// Rules:
+//   If RO assigns indicator to Q1 → SDO can only report in Q1
+//   If RO assigns to Q2 → SDO can report in Q1 and/or Q2
+//   If RO assigns to Q3 → SDO can report in Q1, Q2, and/or Q3
+//   If RO assigns to Q4 → SDO can report in Q1, Q2, Q3, and/or Q4
+// Aggregation: SDO accomplishments in all quarters UP TO the RO quarter are
+//   summed (for counts) or averaged (for percentages) when displayed in RO dashboard.
+// ============================================================
+const Q_ORDER=['Q1','Q2','Q3','Q4'];
+function qIndex(q){return Q_ORDER.indexOf(q);}
+function sdoAllowedQuarters(ind){
+  // Returns which quarters SDO is allowed to encode for this indicator
+  const roQ=quarterAssignments[ind.key];
+  if(!roQ) return [];
+  const roIdx=qIndex(roQ);
+  return Q_ORDER.slice(0,roIdx+1);
+}
+
 async function renderEncode(){
   const mc=document.getElementById('mainContent');
   mc.innerHTML=`<div class="page-title">✏️ Encode Data</div><div class="loading">Loading…</div>`;
@@ -912,30 +964,37 @@ async function renderEncode(){
   await Promise.all([loadQuarterAssignments(), loadEncodingControl()]);
   await loadCorrectionRequests(currentUser.username);
   
-  const myData=await sbGet('bar1_data',`?sdo_code=eq.${currentUser.username}`);
-  const myTargets=await sbGet('bar1_targets',`?sdo_code=eq.${currentUser.username}`);
-  const myRemarks=await sbGet('bar1_remarks',`?sdo_code=eq.${currentUser.username}`);
+  const [myData, myTargets, myRemarks, roTargets]=await Promise.all([
+    sbGet('bar1_data',`?sdo_code=eq.${currentUser.username}`),
+    sbGet('bar1_targets',`?sdo_code=eq.${currentUser.username}`),
+    sbGet('bar1_remarks',`?sdo_code=eq.${currentUser.username}`),
+    sbGet('bar1_targets','?sdo_code=eq.RO')
+  ]);
   
   const dataMap={};(myData||[]).forEach(r=>{dataMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
   const targetMap={};(myTargets||[]).forEach(r=>{targetMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
   const remarkMap={};(myRemarks||[]).forEach(r=>{remarkMap[`${r.quarter}_${r.field_key}`]=r.remark_text;});
-  
-  let activeQ='Q1';
+  const roMap={};(roTargets||[]).forEach(r=>{roMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
+
+  window._encDataMap=dataMap;
+  window._encTargetMap=targetMap;
+  window._encRemarkMap=remarkMap;
+  window._encRoMap=roMap;
   
   function buildEncodeHTML(q){
     const isOpen=encodingControl[q]||false;
-    const assignedInds=getIndicatorsForQuarter(q);
-    
     let h=`<div class="msg" id="encMsg"></div>`;
     
     if(!isOpen){
-      h+=`<div class="msg msg-info" style="display:block">🔒 Encoding for <strong>${q}</strong> is currently <strong>CLOSED</strong> by the Administrator. You may view your previously submitted data below (read-only).</div>`;
+      h+=`<div class="msg msg-info" style="display:block">🔒 Encoding for <strong>${q}</strong> is currently <strong>CLOSED</strong> by the Administrator. Your previously saved data is shown below (read-only).</div>`;
     } else {
-      h+=`<div class="msg msg-success" style="display:block">✅ Encoding for <strong>${q}</strong> is <strong>OPEN</strong>. Only indicators assigned to <strong>${q}</strong> by the Administrator are enabled.</div>`;
+      h+=`<div class="msg msg-success" style="display:block">✅ Encoding for <strong>${q}</strong> is <strong>OPEN</strong>.</div>`;
     }
-    
-    if(assignedInds.length===0){
-      h+=`<div class="card"><div class="empty">No indicators have been assigned to <strong>${q}</strong> yet by the Administrator.</div></div>`;
+
+    // Check if any indicators are allowed in this quarter
+    const indsAllowedHere=ALL_INDICATORS.filter(ind=>sdoAllowedQuarters(ind).includes(q));
+    if(indsAllowedHere.length===0){
+      h+=`<div class="card"><div class="empty">No indicators are assigned to be reported in <strong>${q}</strong>. The Administrator may not have set quarter assignments yet, or no indicator requires reporting in this quarter.</div></div>`;
     }
     
     PROGRAMS.forEach(prog=>{
@@ -946,38 +1005,52 @@ async function renderEncode(){
       prog.sections.forEach(sec=>{
         h+=`<div class="ind-sub" style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:6px">${sec.title}</div>`;
         sec.indicators.forEach(ind=>{
-          const isAssigned=quarterAssignments[ind.key]===q;
-          const canEdit=isOpen && isAssigned;
+          const roAssignedQ=quarterAssignments[ind.key];
+          const allowedQs=sdoAllowedQuarters(ind);
+          const isAllowedHere=allowedQs.includes(q);
+          const isROQuarter=roAssignedQ===q;
           const corrKey=`${currentUser.username}_${q}_${ind.key}`;
           const corrStatus=correctionRequests[corrKey]?.status;
-          const corrId=correctionRequests[corrKey]?.id;
           const corrApproved=corrStatus==='approved';
-          const canEditWithCorr=canEdit||corrApproved;
-          
-          const tVal=targetMap[`${q}_${ind.key}`]||'';
-          const aVal=dataMap[`${q}_${ind.key}`]||'';
-          const rVal=remarkMap[`${q}_${ind.key}`]||'';
-          
-          const disabledAttr=canEditWithCorr?'':'disabled';
-          const notAssignedNote=!isAssigned?`<span style="font-size:11px;color:var(--muted);margin-left:8px">⬤ Not assigned to ${q}</span>`:'';
-          
-          h+=`<div class="ind-group" style="${!isAssigned?'opacity:0.5':''}">
-            <div class="ind-label">${ind.label}${notAssignedNote}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+          const canEdit=(isOpen && isAllowedHere)||corrApproved;
+          const disabledAttr=canEdit?'':'disabled';
+
+          const tVal=targetMap[`${q}_${ind.key}`]??'';
+          const aVal=dataMap[`${q}_${ind.key}`]??'';
+          const rVal=remarkMap[`${q}_${ind.key}`]??'';
+          const roTarget=roAssignedQ?roMap[`${roAssignedQ}_${ind.key}`]:'';
+
+          // Build hint about reporting rule
+          let hint='';
+          if(!roAssignedQ){
+            hint=`<span style="font-size:11px;color:#999">⬤ Not yet assigned by Admin</span>`;
+          } else if(isROQuarter){
+            hint=`<span style="font-size:11px;color:#2e7d32;font-weight:600">✅ RO Reporting Quarter — RO Target: <strong>${roTarget||'—'}</strong></span>`;
+            if(allowedQs.length>1) hint+=` <span style="font-size:11px;color:var(--muted)">(SDO may also report in ${allowedQs.filter(x=>x!==q).join(', ')}; cumulative sum/avg will be used)</span>`;
+          } else if(isAllowedHere){
+            hint=`<span style="font-size:11px;color:#e65100;font-weight:600">📅 Cumulative reporting allowed — RO reports on <strong>${roAssignedQ}</strong>. Your data here will be included in the ${roAssignedQ} consolidated total.</span>`;
+          } else {
+            hint=`<span style="font-size:11px;color:#aaa">⬤ Not allowed in ${q} (assigned to ${roAssignedQ})</span>`;
+          }
+
+          h+=`<div class="ind-group" style="${!isAllowedHere&&!corrApproved?'opacity:0.45':''}">
+            <div class="ind-label">${ind.label}</div>
+            <div style="margin-bottom:6px">${hint}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
               <div class="form-group">
-                <label>SDO Target</label>
+                <label>SDO Target for ${q}</label>
                 <input type="number" id="tgt_${q}_${ind.key}" value="${tVal}" min="0" ${disabledAttr} placeholder="0">
               </div>
               <div class="form-group">
-                <label>Accomplishment</label>
+                <label>Accomplishment for ${q}</label>
                 <input type="number" id="acc_${q}_${ind.key}" value="${aVal}" min="0" ${disabledAttr} placeholder="0">
               </div>
             </div>
             <div class="remark-box">
               <div class="remark-label">💬 Remarks / Explanation</div>
-              <textarea id="rmk_${q}_${ind.key}" ${disabledAttr} placeholder="Enter remarks or explanation for this indicator…">${rVal}</textarea>
+              <textarea id="rmk_${q}_${ind.key}" ${disabledAttr} placeholder="Enter remarks for this indicator in ${q}…">${rVal}</textarea>
             </div>
-            ${isAssigned&&!canEdit&&!corrApproved?`
+            ${isAllowedHere&&!canEdit&&!corrApproved?`
               <div style="margin-top:6px">
                 ${corrStatus==='pending'?`<span class="badge badge-pending">Correction Request: PENDING admin approval</span>`:''}
                 ${!corrStatus?`<button class="correction-btn" onclick="requestCorrection('${q}','${ind.key}')">🔁 Request Correction</button>`:''}
@@ -990,14 +1063,14 @@ async function renderEncode(){
       h+=`</div>`;
     });
     
-    if(isOpen || Object.values(correctionRequests).some(c=>c.status==='approved')){
+    if(isOpen){
       h+=`<div style="margin-top:16px"><button class="btn btn-primary" onclick="saveEncodeData('${q}')">☁️ Save ${q} Data to Cloud</button></div>`;
     }
     return h;
   }
   
   let html=`<div class="page-title">✏️ Encode Data</div>
-  <div class="page-sub">${currentUser.name} — Enter targets and accomplishments per indicator</div>
+  <div class="page-sub">${currentUser.name} — Enter targets and accomplishments. You may report cumulatively across allowed quarters.</div>
   <div class="q-tabs">
     <button class="q-tab active" id="qtab_Q1" onclick="switchEncodeQ('Q1')">Q1</button>
     <button class="q-tab" id="qtab_Q2" onclick="switchEncodeQ('Q2')">Q2</button>
@@ -1016,22 +1089,6 @@ async function renderEncode(){
   };
 }
 
-async function requestCorrection(q, fieldKey){
-  const corrKey=`${currentUser.username}_${q}_${fieldKey}`;
-  if(correctionRequests[corrKey]) return;
-  
-  await fetch(`${SUPABASE_URL}/rest/v1/bar1_correction_requests`,{
-    method:'POST',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-    body:JSON.stringify({sdo_code:currentUser.username, quarter:q, field_key:fieldKey, status:'pending'})
-  });
-  
-  await loadCorrectionRequests(currentUser.username);
-  // Refresh current tab
-  const activeTab=document.querySelector('.q-tab.active');
-  if(activeTab) window.switchEncodeQ(activeTab.textContent.trim());
-}
-
 async function saveEncodeData(q){
   const msg=document.getElementById('encMsg');
   msg.style.display='none';
@@ -1039,11 +1096,12 @@ async function saveEncodeData(q){
   const dataRows=[], targetRows=[], remarkRows=[];
   
   ALL_INDICATORS.forEach(ind=>{
-    const isAssigned=quarterAssignments[ind.key]===q;
+    const allowedQs=sdoAllowedQuarters(ind);
     const corrKey=`${currentUser.username}_${q}_${ind.key}`;
     const corrApproved=correctionRequests[corrKey]?.status==='approved';
     const isOpen=encodingControl[q]||false;
-    if(!isOpen && !corrApproved) return; // skip closed non-approved
+    const isAllowed=allowedQs.includes(q);
+    if((!isOpen||!isAllowed) && !corrApproved) return;
     
     const tEl=document.getElementById(`tgt_${q}_${ind.key}`);
     const aEl=document.getElementById(`acc_${q}_${ind.key}`);
@@ -1077,6 +1135,52 @@ async function saveEncodeData(q){
   }
 }
 
+async function requestCorrection(q, fieldKey){
+  const corrKey=`${currentUser.username}_${q}_${fieldKey}`;
+  if(correctionRequests[corrKey]) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/bar1_correction_requests`,{
+    method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify({sdo_code:currentUser.username, quarter:q, field_key:fieldKey, status:'pending'})
+  });
+  await loadCorrectionRequests(currentUser.username);
+  const activeTab=document.querySelector('.q-tab.active');
+  if(activeTab) window.switchEncodeQ(activeTab.textContent.trim());
+}
+
+// ============================================================
+// CUMULATIVE AGGREGATION HELPER
+// ============================================================
+// For a given indicator and the RO-assigned reporting quarter,
+// aggregate all SDO accomplishments from Q1 up to the RO quarter.
+// - Percentage indicators (type='pct'): AVERAGE across quarters with data
+// - Count indicators (type='num'): SUM across quarters with data
+function getConsolidatedAccomplishment(ind, allDataMap){
+  const roQ=quarterAssignments[ind.key];
+  if(!roQ) return 0;
+  const roIdx=qIndex(roQ);
+  const relevantQs=Q_ORDER.slice(0,roIdx+1);
+  
+  let total=0;
+  SDO_LIST.forEach(sdo=>{
+    if(ind.type==='pct'){
+      // For percentage: take the latest quarter's value for each SDO, or sum entries and average
+      let sdoVals=relevantQs.map(q=>allDataMap[`${sdo}_${q}_${ind.key}`]).filter(v=>v!==undefined&&v!==null);
+      if(sdoVals.length>0){
+        // Use sum of all quarter values divided by count (cumulative average per SDO)
+        total+=sdoVals.reduce((a,b)=>a+Number(b),0)/sdoVals.length;
+      }
+    } else {
+      // For counts: sum all quarter values per SDO
+      relevantQs.forEach(q=>{
+        const v=allDataMap[`${sdo}_${q}_${ind.key}`];
+        if(v!==undefined&&v!==null) total+=Number(v);
+      });
+    }
+  });
+  return Math.round(total*100)/100;
+}
+
 // ============================================================
 // PAGE: MY SUMMARY (SDO)
 // ============================================================
@@ -1084,30 +1188,96 @@ async function renderMySummary(){
   const mc=document.getElementById('mainContent');
   mc.innerHTML=`<div class="page-title">📊 My Summary</div><div class="loading">Loading…</div>`;
   
-  const [myData, myTargets]=await Promise.all([
+  await loadQuarterAssignments();
+  const [myData, myTargets, roTargets]=await Promise.all([
     sbGet('bar1_data',`?sdo_code=eq.${currentUser.username}`),
-    sbGet('bar1_targets',`?sdo_code=eq.${currentUser.username}`)
+    sbGet('bar1_targets',`?sdo_code=eq.${currentUser.username}`),
+    sbGet('bar1_targets','?sdo_code=eq.RO')
   ]);
   
-  const dataMap={};(myData||[]).forEach(r=>{dataMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
-  const targetMap={};(myTargets||[]).forEach(r=>{targetMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
+  const dataMap={};(myData||[]).forEach(r=>{dataMap[`${r.quarter}_${r.field_key}`]=Number(r.field_value);});
+  const targetMap={};(myTargets||[]).forEach(r=>{targetMap[`${r.quarter}_${r.field_key}`]=Number(r.field_value);});
+  const roMap={};(roTargets||[]).forEach(r=>{roMap[`${r.quarter}_${r.field_key}`]=Number(r.field_value);});
+
+  let html=`<div class="page-title">📊 My Summary</div>
+  <div class="page-sub">${currentUser.name} — Performance per indicator across all quarters</div>
+  <div class="q-tabs">
+    <button class="q-tab active" id="sqtab_ALL" onclick="switchSummaryQ('ALL')">All Quarters</button>
+    <button class="q-tab" id="sqtab_Q1" onclick="switchSummaryQ('Q1')">Q1</button>
+    <button class="q-tab" id="sqtab_Q2" onclick="switchSummaryQ('Q2')">Q2</button>
+    <button class="q-tab" id="sqtab_Q3" onclick="switchSummaryQ('Q3')">Q3</button>
+    <button class="q-tab" id="sqtab_Q4" onclick="switchSummaryQ('Q4')">Q4</button>
+  </div>
+  <div id="summaryBody"></div>`;
   
-  let html=`<div class="page-title">📊 My Summary</div><div class="page-sub">${currentUser.name}</div>`;
-  
-  ['Q1','Q2','Q3','Q4'].forEach(q=>{
-    const hasData=ALL_INDICATORS.some(i=>dataMap[`${q}_${i.key}`]!==undefined);
-    if(!hasData) return;
-    html+=`<div class="card"><h3>${q} Summary</h3><table><thead><tr><th>Indicator</th><th>Target</th><th>Accomplishment</th><th>Status</th></tr></thead><tbody>`;
-    ALL_INDICATORS.forEach(ind=>{
-      const t=targetMap[`${q}_${ind.key}`];
-      const a=dataMap[`${q}_${ind.key}`];
-      if(t===undefined&&a===undefined) return;
-      const met=a>=t;
-      html+=`<tr><td style="font-size:12px">${ind.label}</td><td>${t??'—'}</td><td>${a??'—'}</td><td><span class="badge ${met?'badge-met':'badge-below'}">${met?'MET':'BELOW'}</span></td></tr>`;
-    });
-    html+=`</tbody></table></div>`;
-  });
   mc.innerHTML=html;
+
+  window._summaryDataMap=dataMap;
+  window._summaryTargetMap=targetMap;
+  window._summaryRoMap=roMap;
+
+  renderSummaryBody('ALL');
+
+  window.switchSummaryQ=function(q){
+    document.querySelectorAll('.q-tab').forEach(t=>t.classList.remove('active'));
+    const tab=document.getElementById(`sqtab_${q}`);
+    if(tab) tab.classList.add('active');
+    renderSummaryBody(q);
+  };
+}
+
+function renderSummaryBody(selectedQ){
+  const container=document.getElementById('summaryBody');
+  if(!container) return;
+  const dataMap=window._summaryDataMap||{};
+  const targetMap=window._summaryTargetMap||{};
+  const roMap=window._summaryRoMap||{};
+  const quarters=selectedQ==='ALL'?['Q1','Q2','Q3','Q4']:[selectedQ];
+
+  let html='';
+  PROGRAMS.forEach(prog=>{
+    let progHasAny=false;
+    let progHtml=`<div class="prog-header">${prog.name}</div><div style="border:2px solid var(--primary);border-top:none;border-radius:0 0 10px 10px;padding:12px;margin-bottom:16px">`;
+
+    prog.sections.forEach(sec=>{
+      let secHtml=`<div style="font-size:13px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.4px;padding:5px 8px;background:#e8f0fb;border-radius:5px;margin-bottom:8px">${sec.title}</div>`;
+      secHtml+=`<table style="margin-bottom:12px"><thead><tr><th style="min-width:240px">Indicator</th><th>Quarter</th><th>RO Target</th><th>My SDO Target</th><th>Accomplishment</th><th>vs SDO Target</th><th>vs RO Target</th></tr></thead><tbody>`;
+
+      let secHasAny=false;
+      sec.indicators.forEach(ind=>{
+        const roAssignedQ=quarterAssignments[ind.key];
+        quarters.forEach(q=>{
+          const roTarget=roAssignedQ===q?(roMap[`${q}_${ind.key}`]||0):0;
+          const sdoTarget=targetMap[`${q}_${ind.key}`];
+          const accomplishment=dataMap[`${q}_${ind.key}`];
+          // Show row if: there is any data, or it's the assigned quarter
+          if(sdoTarget===undefined && accomplishment===undefined && roAssignedQ!==q) return;
+          secHasAny=true; progHasAny=true;
+          const sT=sdoTarget??0;
+          const acc=accomplishment??0;
+          const metSDO=sT>0&&acc>=sT;
+          const metRO=roTarget>0&&acc>=roTarget;
+          secHtml+=`<tr>
+            <td style="font-size:12px">${ind.label}</td>
+            <td><span style="font-weight:700;color:var(--primary)">${q}</span></td>
+            <td>${roTarget||'—'}</td>
+            <td>${sdoTarget!==undefined?sdoTarget:'—'}</td>
+            <td style="font-weight:700">${accomplishment!==undefined?accomplishment:'—'}</td>
+            <td>${sT>0?`<span class="badge ${metSDO?'badge-met':'badge-below'}">${metSDO?'MET':'BELOW'}</span>`:'—'}</td>
+            <td>${roTarget>0?`<span class="badge ${metRO?'badge-met':'badge-below'}">${metRO?'MET':'BELOW'}</span>`:'—'}</td>
+          </tr>`;
+        });
+      });
+      secHtml+=`</tbody></table>`;
+      if(secHasAny) progHtml+=secHtml;
+    });
+
+    progHtml+=`</div>`;
+    if(progHasAny) html+=progHtml;
+  });
+
+  if(!html) html=`<div class="card"><div class="empty">No data encoded yet for the selected quarter(s).</div></div>`;
+  container.innerHTML=html;
 }
 
 // ============================================================
@@ -1126,19 +1296,31 @@ async function renderRegional(){
   const dataMap={};(allData||[]).forEach(r=>{dataMap[`${r.sdo_code}_${r.quarter}_${r.field_key}`]=r.field_value;});
   const roMap={};(roData||[]).forEach(r=>{roMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
   
-  let html=`<div class="page-title">🌐 Regional Totals</div><div class="page-sub">Consolidated accomplishment vs RO target — individual SDO data is not shown.</div>`;
+  let html=`<div class="page-title">🌐 Regional Totals</div>
+  <div class="page-sub">Consolidated accomplishment vs RO target (cumulative aggregation applied). Individual SDO data is not shown.</div>`;
   
+  // Show by RO-assigned quarter grouping
   ['Q1','Q2','Q3','Q4'].forEach(q=>{
-    html+=`<div class="card"><h3>${q} Regional Totals</h3><table><thead><tr><th>Indicator</th><th>RO Target</th><th>Regional Total/Avg</th><th>Status</th></tr></thead><tbody>`;
-    ALL_INDICATORS.forEach(ind=>{
+    const indsForQ=ALL_INDICATORS.filter(i=>quarterAssignments[i.key]===q);
+    if(!indsForQ.length) return;
+    html+=`<div class="card"><h3>RO Reporting Quarter: ${q}</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Indicators assigned to be reported in ${q}. Accomplishments include cumulative data from all allowed quarters.</p>
+    <table><thead><tr><th>Indicator</th><th>RO Target</th><th>Consolidated Accomplishment</th><th>Status</th></tr></thead><tbody>`;
+    indsForQ.forEach(ind=>{
       const roT=roMap[`${q}_${ind.key}`]||0;
-      const total=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_${q}_${ind.key}`]||0),0);
-      if(roT===0&&total===0) return;
-      const met=total>=roT;
-      html+=`<tr><td style="font-size:12px">${ind.label}</td><td>${roT||'—'}</td><td>${total||'—'}</td><td><span class="badge ${met?'badge-met':'badge-below'}">${met?'MET':'BELOW'}</span></td></tr>`;
+      const consolidated=getConsolidatedAccomplishment(ind, dataMap);
+      const met=consolidated>=roT&&roT>0;
+      html+=`<tr><td style="font-size:12px">${ind.label}</td><td>${roT||'—'}</td><td style="font-weight:700">${consolidated||'—'}</td><td>${roT>0?`<span class="badge ${met?'badge-met':'badge-below'}">${met?'MET':'BELOW'}</span>`:'—'}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
   });
+
+  const unassigned=ALL_INDICATORS.filter(i=>!quarterAssignments[i.key]);
+  if(unassigned.length){
+    html+=`<div class="card"><h3>Unassigned Indicators</h3><p style="font-size:12px;color:var(--muted)">These indicators have not been assigned to a reporting quarter by the Administrator.</p><table><thead><tr><th>Indicator</th></tr></thead><tbody>`;
+    unassigned.forEach(ind=>{html+=`<tr><td style="font-size:12px">${ind.label}</td></tr>`;});
+    html+=`</tbody></table></div>`;
+  }
   mc.innerHTML=html;
 }
 
@@ -1211,26 +1393,63 @@ async function renderConsolidated(){
   let activeQ='Q1';
   
   function buildConsoTable(q){
-    let h=`<div style="overflow-x:auto"><table style="min-width:1000px"><thead><tr>
-      <th style="min-width:200px">Indicator</th>
+    // For the Consolidated Table, we show:
+    // - Only indicators assigned to this quarter (RO reporting quarter)
+    // - Per SDO: sum of their accomplishments across all quarters up to this one
+    // - RO Total: cumulative consolidated accomplishment
+    const indsForQ=ALL_INDICATORS.filter(i=>quarterAssignments[i.key]===q);
+    
+    let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+      Showing indicators with RO reporting quarter = <strong>${q}</strong>. 
+      SDO values shown are cumulative (all allowed quarters summed/averaged up to ${q}).
+    </div>
+    <div style="overflow-x:auto"><table style="min-width:1000px"><thead><tr>
+      <th style="min-width:240px">Indicator</th>
       <th>RO Target</th>
-      ${SDO_LIST.map(s=>`<th>${ACCOUNTS[s]?.name||s}</th>`).join('')}
-      <th>Regional Total</th>
+      ${SDO_LIST.map(s=>`<th style="font-size:11px">${ACCOUNTS[s]?.name||s}</th>`).join('')}
+      <th>RO Consolidated</th>
+      <th>Status</th>
     </tr></thead><tbody>`;
     
     PROGRAMS.forEach(prog=>{
-      h+=`<tr><td colspan="${SDO_LIST.length+3}" style="background:#e3f2fd;font-weight:700;color:#1565c0;font-size:12px">${prog.name}</td></tr>`;
-      ALL_INDICATORS.filter(i=>i.prog===prog.key).forEach(ind=>{
-        const roT=roMap[`${q}_${ind.key}`];
-        const total=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_${q}_${ind.key}`]||0),0);
-        h+=`<tr>
-          <td style="font-size:12px">${ind.label}</td>
-          <td>${roT??'—'}</td>
-          ${SDO_LIST.map(sdo=>`<td>${dataMap[`${sdo}_${q}_${ind.key}`]??'—'}</td>`).join('')}
-          <td style="font-weight:700">${total||'—'}</td>
-        </tr>`;
+      const progInds=indsForQ.filter(i=>i.prog===prog.key);
+      if(!progInds.length) return;
+      h+=`<tr><td colspan="${SDO_LIST.length+4}" style="background:#e3f2fd;font-weight:700;color:#1565c0;font-size:12px;padding:8px 10px">${prog.name}</td></tr>`;
+      
+      prog.sections.forEach(sec=>{
+        const secInds=progInds.filter(i=>sec.indicators.some(si=>si.key===i.key));
+        if(!secInds.length) return;
+        h+=`<tr><td colspan="${SDO_LIST.length+4}" style="background:#f5f5f5;font-size:11px;font-weight:700;color:var(--primary);padding:5px 10px">${sec.title}</td></tr>`;
+        secInds.forEach(ind=>{
+          const roT=roMap[`${q}_${ind.key}`];
+          const roIdx=qIndex(q);
+          const relevantQs=Q_ORDER.slice(0,roIdx+1);
+          // Per-SDO cumulative value
+          const sdoVals=SDO_LIST.map(sdo=>{
+            if(ind.type==='pct'){
+              const vals=relevantQs.map(rq=>dataMap[`${sdo}_${rq}_${ind.key}`]).filter(v=>v!==undefined&&v!==null);
+              return vals.length>0?Math.round(vals.reduce((a,b)=>a+Number(b),0)/vals.length*100)/100:null;
+            } else {
+              const s=relevantQs.reduce((acc,rq)=>acc+(Number(dataMap[`${sdo}_${rq}_${ind.key}`])||0),0);
+              return s>0?s:null;
+            }
+          });
+          const consolidated=getConsolidatedAccomplishment(ind, dataMap);
+          const met=consolidated>=(roT||0)&&(roT||0)>0;
+          h+=`<tr>
+            <td style="font-size:12px">${ind.label}</td>
+            <td>${roT??'—'}</td>
+            ${sdoVals.map(v=>`<td>${v!==null?v:'—'}</td>`).join('')}
+            <td style="font-weight:700">${consolidated||'—'}</td>
+            <td>${roT>0?`<span class="badge ${met?'badge-met':'badge-below'}">${met?'MET':'BELOW'}</span>`:'—'}</td>
+          </tr>`;
+        });
       });
     });
+
+    if(!indsForQ.length){
+      h+=`<tr><td colspan="${SDO_LIST.length+4}" style="text-align:center;padding:20px;color:var(--muted)">No indicators assigned to ${q} yet.</td></tr>`;
+    }
     h+=`</tbody></table></div>`;
     return h;
   }
