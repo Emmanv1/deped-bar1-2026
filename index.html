@@ -1,1036 +1,769 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>BAR 1 CY 2026 — DepEd Region XIII</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DepEd Region XIII — BAR 1 Portal CY 2026</title>
 <style>
-:root{
-  --bg:#f2f1ed;--surface:#fff;--surface2:#eceae3;--border:#d4d1c8;
-  --text:#1a1917;--text2:#6b6860;--text3:#9b9890;
-  --accent:#1a4fa8;--accent2:#0e7a5c;--warn:#b85c00;
-  --danger:#c0272d;--purple:#5b3fa8;
-  --radius:6px;--radius-lg:10px;
-}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
-
-/* LOGIN */
-#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2.5rem 2rem;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-.login-logo{width:54px;height:54px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin:0 auto 1.25rem}
-.login-title{font-size:18px;font-weight:600;text-align:center;margin-bottom:4px}
-.login-sub{font-size:12px;color:var(--text2);text-align:center;margin-bottom:1.75rem}
-.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:1rem}
-.fg label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
-.fg input{font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;transition:border-color .15s}
-.fg input:focus{border-color:var(--accent)}
-.btn-primary{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
-.btn-primary:hover{opacity:.87}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed}
-.login-err{color:var(--danger);font-size:12px;text-align:center;margin-top:.75rem;display:none}
-.login-spin{text-align:center;font-size:12px;color:var(--text3);margin-top:.75rem;display:none}
-
-/* APP */
-#appShell{display:none;flex-direction:column;min-height:100vh}
-header{background:var(--accent);color:#fff;padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:3px solid #0f3380;flex-shrink:0}
-.hdr-left{display:flex;align-items:center;gap:12px}
-.hdr-logo{width:32px;height:32px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--accent);flex-shrink:0}
-.hdr-title{font-size:14px;font-weight:600}
-.hdr-sub{font-size:10px;opacity:.7;margin-top:1px}
-.hdr-right{display:flex;align-items:center;gap:10px}
-.hdr-user{font-size:12px;opacity:.85;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-out{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 12px;border-radius:999px;font-size:12px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
-.btn-out:hover{background:rgba(255,255,255,.25)}
-.content{flex:1;padding:1.5rem;max-width:1280px;width:100%;margin:0 auto}
-
-/* TABS */
-.tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:4px;width:fit-content;flex-wrap:wrap;margin-bottom:1.25rem}
-.tab-btn{padding:6px 14px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--text2);white-space:nowrap}
-.tab-btn.active{background:var(--surface);color:var(--text);font-weight:500;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-
-/* CARDS */
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:12px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;margin-bottom:12px}
-.card-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem;display:flex;align-items:center;gap:6px}
-.card-title::before{content:'';width:3px;height:14px;background:var(--accent);border-radius:2px;display:inline-block}
-
-/* KPI */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1.25rem}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:.9rem 1rem;position:relative;overflow:hidden}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-c,var(--accent))}
-.kpi-label{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-.kpi-value{font-size:24px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--text);line-height:1}
-.kpi-sub{font-size:11px;color:var(--text3);margin-top:4px}
-
-/* FORM */
-.sec-hd{font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;padding:.5rem 0;border-bottom:2px solid var(--accent);margin:1.25rem 0 .75rem}
-.sub-hd{font-size:11px;font-weight:600;color:var(--text2);margin:.75rem 0 .4rem;padding-left:4px;border-left:2px solid var(--border)}
-
-/* Target+Accomplishment grid */
-.ta-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:6px}
-.ta-grid.header-row span{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;text-align:center}
-.ta-grid.header-row span:first-child{text-align:left}
-.ta-label{font-size:12px;color:var(--text);padding:2px 0}
-.ta-input{padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--bg);color:var(--text);outline:none;width:100%;text-align:right}
-.ta-input:focus{border-color:var(--accent)}
-.ta-input.target{background:#fffbf0;border-color:#e8d5a0}
-.ta-input.target:focus{border-color:var(--warn)}
-.ta-input.accomplish{background:#f0f9f5;border-color:#a8d5c0}
-.ta-input.accomplish:focus{border-color:var(--accent2)}
-
-.quarter-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.qtab{padding:5px 16px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;color:var(--text2)}
-.qtab.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
-.btn-save{background:var(--accent2);color:#fff;border:none;padding:9px 24px;border-radius:var(--radius);font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:1rem}
-.btn-save:hover{opacity:.88}
-.btn-save:disabled{opacity:.5;cursor:not-allowed}
-.save-msg{font-size:12px;margin-top:.5rem;display:none;font-weight:500}
-.msg-ok{color:var(--accent2)}
-.msg-err{color:var(--danger)}
-
-/* TABLE */
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead th{text-align:left;padding:7px 10px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border);background:var(--bg);white-space:nowrap}
-tbody td{padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
-tbody tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:var(--bg)}
-tfoot td{padding:7px 10px;font-weight:600;background:var(--surface2);border-top:2px solid var(--border)}
-.num{font-family:'IBM Plex Mono',monospace;text-align:right}
-.th-target{background:#fffbf0 !important;color:var(--warn) !important}
-.th-accomplish{background:#f0f9f5 !important;color:var(--accent2) !important}
-.th-variance{background:#f0f0ff !important;color:var(--purple) !important}
-td.target-cell{background:#fffbf0;font-family:'IBM Plex Mono',monospace;text-align:right}
-td.accomplish-cell{background:#f0f9f5;font-family:'IBM Plex Mono',monospace;text-align:right}
-td.variance-cell{font-family:'IBM Plex Mono',monospace;text-align:right}
-td.var-neg{color:var(--danger)}
-td.var-pos{color:var(--accent2)}
-
-/* BADGE */
-.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600}
-.b-ok{background:#d4edda;color:#155724}
-.b-warn{background:#fff3cd;color:#856404}
-.b-na{background:var(--surface2);color:var(--text3)}
-.b-blue{background:#cfe2ff;color:#084298}
-
-/* SDO CARDS */
-.sdo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:1.25rem}
-.sdo-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--border);border-radius:var(--radius-lg);padding:.85rem 1rem;cursor:pointer;transition:border-color .15s}
-.sdo-card:hover{border-color:var(--accent)}
-.sdo-card.has-data{border-left-color:var(--accent2)}
-.sdo-name{font-weight:500;font-size:13px;margin-bottom:3px}
-.sdo-status{font-size:11px;color:var(--text3)}
-
-/* PDF UPLOAD */
-.upload-area{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;margin-bottom:1rem;cursor:pointer;transition:border-color .15s}
-.upload-area:hover{border-color:var(--accent)}
-.upload-area input[type=file]{display:none}
-.upload-label{font-size:13px;color:var(--text2);cursor:pointer}
-.upload-label strong{color:var(--accent)}
-.upload-list{display:flex;flex-direction:column;gap:6px;margin-top:.75rem}
-.upload-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);font-size:12px}
-.upload-item a{color:var(--accent);text-decoration:none;font-weight:500}
-.upload-item a:hover{text-decoration:underline}
-.upload-time{color:var(--text3);font-size:11px}
-.btn-del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;padding:2px 6px;border-radius:var(--radius)}
-.btn-del:hover{background:#fff0f0}
-
-/* ALERT */
-.alert{padding:9px 14px;border-radius:var(--radius);font-size:12px;margin-bottom:1rem;border-left:3px solid}
-.alert-info{background:#e8f0fe;border-color:var(--accent);color:#1a1e5a}
-.alert-warn{background:#fff8e6;border-color:var(--warn);color:#5a3a00}
-
-/* MISC */
-.row-between{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem}
-.isel{font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)}
-.chart-wrap{position:relative;width:100%}
-.loading{text-align:center;padding:2rem;color:var(--text3);font-size:13px}
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#1a202c;font-size:14px}
+#loginPage{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a365d 0%,#2d6a4f 100%)}
+.login-card{background:white;border-radius:16px;padding:40px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-title{font-size:20px;font-weight:700;color:#1a365d;text-align:center;margin-bottom:4px}
+.login-sub{font-size:13px;color:#718096;text-align:center;margin-bottom:28px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:11px;font-weight:700;color:#4a5568;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;transition:border-color .2s;outline:none}
+.form-group input:focus{border-color:#3182ce}
+.btn-login{width:100%;padding:12px;background:#2b6cb0;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
+.btn-login:hover{background:#2c5282}
+.login-error{color:#e53e3e;font-size:13px;text-align:center;margin-top:12px;display:none}
+#appShell{display:none}
+.header{background:#1a365d;color:white;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header-title{font-size:16px;font-weight:700}
+.header-sub{font-size:11px;opacity:.75;margin-top:2px}
+.user-badge{background:rgba(255,255,255,.15);padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600}
+.btn-logout{background:rgba(255,255,255,.2);border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;margin-left:10px}
+.btn-logout:hover{background:rgba(255,255,255,.3)}
+.tabs{background:white;border-bottom:2px solid #e2e8f0;padding:0 16px;display:flex;gap:2px;overflow-x:auto;white-space:nowrap}
+.tab-btn{padding:13px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;color:#718096;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap}
+.tab-btn.active{color:#2b6cb0;border-bottom-color:#2b6cb0}
+.tab-btn:hover{color:#2b6cb0}
+.content{padding:20px;max-width:1600px;margin:0 auto}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:white;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid #3182ce}
+.kpi-label{font-size:11px;color:#718096;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kpi-value{font-size:26px;font-weight:700;color:#1a202c}
+.kpi-sub{font-size:11px;color:#a0aec0;margin-top:3px}
+.section-card{background:white;border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.section-title{font-size:15px;font-weight:700;color:#1a365d;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #bee3f8}
+.qtabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.qtab{padding:7px 18px;border:2px solid #e2e8f0;border-radius:20px;background:white;cursor:pointer;font-size:13px;font-weight:600;color:#718096;transition:all .2s}
+.qtab.active{background:#2b6cb0;border-color:#2b6cb0;color:white}
+.table-wrap{overflow-x:auto;border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:#1a365d;color:white;padding:9px 10px;text-align:left;font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:1}
+td{padding:7px 10px;border-bottom:1px solid #edf2f7;vertical-align:middle}
+tr:hover td{background:#f7fafc}
+tr:last-child td{border-bottom:none}
+.prog-hdr td{background:#ebf8ff;font-weight:700;color:#1a365d;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.ind-table{width:100%;border-collapse:collapse;font-size:13px}
+.ind-table th{background:#2d3748;color:white;padding:8px 10px;font-size:12px;font-weight:600}
+.ind-table td{padding:7px 10px;border-bottom:1px solid #edf2f7;vertical-align:middle}
+.ind-table .prog-row td{background:#1a365d;color:white;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:5px 10px}
+.num-input{width:86px;padding:5px 7px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;text-align:right}
+.num-input:focus{outline:none}
+.t-input{background:#fffbeb;border-color:#f6c142}.t-input:focus{border-color:#d69e2e}
+.a-input{background:#f0fff4;border-color:#68d391}.a-input:focus{border-color:#38a169}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.bg{background:#c6f6d5;color:#276749}.br{background:#fed7d7;color:#c53030}
+.by{background:#fefcbf;color:#744210}.bgr{background:#edf2f7;color:#4a5568}
+.bb{background:#bee3f8;color:#2c5282}
+.btn{padding:8px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-p{background:#2b6cb0;color:white}.btn-p:hover{background:#2c5282}
+.btn-s{background:#38a169;color:white}.btn-s:hover{background:#276749}
+.btn-d{background:#e53e3e;color:white}.btn-d:hover{background:#c53030}
+.alert{padding:11px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
+.al-s{background:#c6f6d5;color:#276749;border:1px solid #9ae6b4}
+.al-d{background:#fed7d7;color:#c53030;border:1px solid #fc8181}
+.al-i{background:#bee3f8;color:#2c5282;border:1px solid #90cdf4}
+.al-w{background:#fefcbf;color:#744210;border:1px solid #f6e05e}
+.sdo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.sdo-card{background:white;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-top:4px solid #e2e8f0;cursor:pointer;transition:all .2s}
+.sdo-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.12);transform:translateY(-2px)}
+.sdo-card.submitted{border-top-color:#38a169}.sdo-card.partial{border-top-color:#d69e2e}
+.sdo-name{font-weight:700;font-size:14px;margin-bottom:4px}
+.toggle-wrap{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f7fafc;border-radius:8px;margin-bottom:8px}
+.toggle{position:relative;width:48px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#cbd5e0;border-radius:26px;transition:.3s}
+.slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+input:checked+.slider{background:#38a169}
+input:checked+.slider:before{transform:translateX(22px)}
+.upload-area{border:2px dashed #bee3f8;border-radius:10px;padding:20px;text-align:center;background:#f7fafc;cursor:pointer;transition:all .2s;margin-bottom:10px}
+.upload-area:hover{border-color:#3182ce;background:#ebf8ff}
+.upload-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f7fafc;border-radius:8px;margin-bottom:6px;font-size:13px}
+.loading{text-align:center;padding:40px;color:#718096}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#3182ce;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.legend-row{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--text2);margin-bottom:.75rem}
-.legend-row span{display:flex;align-items:center;gap:5px}
-.ldot{width:10px;height:10px;border-radius:2px;display:inline-block}
-footer{text-align:center;font-size:11px;color:var(--text3);padding:1.5rem;border-top:1px solid var(--border);font-family:'IBM Plex Mono',monospace;margin-top:auto}
+.vm{color:#276749;font-weight:600}.vx{color:#c53030;font-weight:600}.vn{color:#a0aec0}
+select{padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;background:white}
+select:focus{outline:none;border-color:#3182ce}
+@media(max-width:768px){.content{padding:12px}.kpi-grid{grid-template-columns:repeat(2,1fr)}.tab-btn{padding:11px 12px;font-size:12px}}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen">
+<div id="loginPage">
   <div class="login-card">
-    <div class="login-logo">D13</div>
-    <div class="login-title">BAR 1 Encoding Portal</div>
-    <div class="login-sub">DepEd Region XIII &nbsp;·&nbsp; Calendar Year 2026</div>
-    <div class="fg"><label>Username</label><input type="text" id="lu" placeholder="e.g. adn" autocomplete="username"/></div>
-    <div class="fg"><label>Password</label><input type="password" id="lp" placeholder="Enter password" autocomplete="current-password"/></div>
-    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
-    <div class="login-err" id="loginErr">Invalid username or password.</div>
-    <div class="login-spin" id="loginSpin"><span class="spinner"></span>Connecting to cloud...</div>
+    <div class="login-logo">
+      <svg width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#1a365d"/><text x="32" y="44" text-anchor="middle" fill="white" font-size="26" font-weight="700" font-family="Arial">D</text></svg>
+    </div>
+    <div class="login-title">DepEd Region XIII</div>
+    <div class="login-sub">BAR 1 Reporting Portal — CY 2026</div>
+    <div class="form-group"><label>Username</label><input type="text" id="lu" placeholder="Enter username" autocomplete="username"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="lp" placeholder="Enter password" autocomplete="current-password"></div>
+    <button class="btn-login" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="lErr">Invalid username or password.</div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="appShell">
-  <header>
-    <div class="hdr-left">
-      <div class="hdr-logo">D13</div>
-      <div>
-        <div class="hdr-title">BAR 1 Encoding Portal &mdash; CY 2026</div>
-        <div class="hdr-sub">DepEd Region XIII &nbsp;·&nbsp; Quarterly Physical Report of Operations</div>
-      </div>
+  <div class="header">
+    <div><div class="header-title">DepEd Region XIII — BAR 1 Portal</div><div class="header-sub">Calendar Year 2026 | Quarterly Physical Report of Operations</div></div>
+    <div style="display:flex;align-items:center"><span class="user-badge" id="uBadge"></span><button class="btn-logout" onclick="doLogout()">Sign Out</button></div>
+  </div>
+
+  <div id="sdoTabs" style="display:none">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab(event,'sdo','encode')">📝 Encode Data</button>
+      <button class="tab-btn" onclick="showTab(event,'sdo','summary')">📊 My Summary</button>
+      <button class="tab-btn" onclick="showTab(event,'sdo','regional')">🌐 Regional Totals</button>
     </div>
-    <div class="hdr-right">
-      <span class="hdr-user" id="hdrUser"></span>
-      <button class="btn-out" onclick="doLogout()">Sign out</button>
+    <div class="content">
+      <div id="tab-sdo-encode" class="tab-content active"></div>
+      <div id="tab-sdo-summary" class="tab-content"></div>
+      <div id="tab-sdo-regional" class="tab-content"></div>
     </div>
-  </header>
-  <div class="content" id="appContent"></div>
-  <footer>DepEd Region XIII &nbsp;·&nbsp; BAR No. 1 &nbsp;·&nbsp; CY 2026 &nbsp;·&nbsp; Powered by Supabase Cloud</footer>
+  </div>
+
+  <div id="adminTabs" style="display:none">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab(event,'admin','dashboard')">📊 Dashboard</button>
+      <button class="tab-btn" onclick="showTab(event,'admin','submissions')">📋 SDO Submissions</button>
+      <button class="tab-btn" onclick="showTab(event,'admin','consolidated')">📑 Consolidated Table</button>
+      <button class="tab-btn" onclick="showTab(event,'admin','edit')">✏️ Edit SDO Data</button>
+      <button class="tab-btn" onclick="showTab(event,'admin','rotargets')">🎯 RO Annual Targets</button>
+      <button class="tab-btn" onclick="showTab(event,'admin','pdfs')">📎 Uploaded PDFs</button>
+      <button class="tab-btn" onclick="showTab(event,'admin','pdfctrl')">⚙️ PDF Upload Control</button>
+    </div>
+    <div class="content">
+      <div id="tab-admin-dashboard" class="tab-content active"></div>
+      <div id="tab-admin-submissions" class="tab-content"></div>
+      <div id="tab-admin-consolidated" class="tab-content"></div>
+      <div id="tab-admin-edit" class="tab-content"></div>
+      <div id="tab-admin-rotargets" class="tab-content"></div>
+      <div id="tab-admin-pdfs" class="tab-content"></div>
+      <div id="tab-admin-pdfctrl" class="tab-content"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// SUPABASE
-// ═══════════════════════════════════════════
-const SB_URL='https://xxxqiermuvjsyejmpuwq.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4eHFpZXJtdXZqc3llam1wdXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjczOTEsImV4cCI6MjA5MDYwMzM5MX0.NRT5talMBXzC3lLuXicRs8x6ZdQM4_wQYsmxO6FzE1o';
-const HDR={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+const SB='https://xxxqiermuvjsyejmpuwq.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4eHFpZXJtdXZqc3llam1wdXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjczOTEsImV4cCI6MjA5MDYwMzM5MX0.NRT5talMBXzC3lLuXicRs8x6ZdQM4_wQYsmxO6FzE1o';
 
-async function sbGet(table,filter=''){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?select=*${filter?'&'+filter:''}`,{headers:HDR});
-  if(!r.ok)throw new Error(await r.text());
-  return r.json();
-}
-async function sbUpsert(table,rows){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...HDR,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(rows)});
-  if(!r.ok)throw new Error(await r.text());
-}
-async function sbInsert(table,row){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}`,{method:'POST',headers:{...HDR,'Prefer':'return=representation'},body:JSON.stringify(row)});
-  if(!r.ok)throw new Error(await r.text());
-  return r.json();
-}
-async function sbDelete(table,filter){
-  const r=await fetch(`${SB_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:HDR});
-  if(!r.ok)throw new Error(await r.text());
-}
-async function sbUploadFile(path,file){
-  const r=await fetch(`${SB_URL}/storage/v1/object/bar1-uploads/${path}`,{
-    method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':file.type,'x-upsert':'false'},body:file
-  });
-  if(!r.ok)throw new Error(await r.text());
-  return `${SB_URL}/storage/v1/object/public/bar1-uploads/${path}`;
-}
-
-// ═══════════════════════════════════════════
-// ACCOUNTS
-// ═══════════════════════════════════════════
-const ACCOUNTS={
-  'admin':{pass:'Admin@2026',role:'admin',name:'Regional Office XIII — Administrator'},
-  'adn':  {pass:'ADN@2026', role:'sdo',  name:'SDO Agusan del Norte',  code:'ADN'},
-  'ads':  {pass:'ADS@2026', role:'sdo',  name:'SDO Agusan del Sur',    code:'ADS'},
-  'bay':  {pass:'BAY@2026', role:'sdo',  name:'SDO Bayugan City',      code:'BAY'},
-  'bis':  {pass:'BIS@2026', role:'sdo',  name:'SDO Bislig City',       code:'BIS'},
-  'but':  {pass:'BUT@2026', role:'sdo',  name:'SDO Butuan City',       code:'BUT'},
-  'cbr':  {pass:'CBR@2026', role:'sdo',  name:'SDO Cabadbaran City',   code:'CBR'},
-  'din':  {pass:'DIN@2026', role:'sdo',  name:'SDO Dinagat Islands',   code:'DIN'},
-  'sia':  {pass:'SIA@2026', role:'sdo',  name:'SDO Siargao',           code:'SIA'},
-  'sc':   {pass:'SC@2026',  role:'sdo',  name:'SDO Surigao City',      code:'SC'},
-  'sdn':  {pass:'SDN@2026', role:'sdo',  name:'SDO Surigao del Norte', code:'SDN'},
-  'sds':  {pass:'SDS@2026', role:'sdo',  name:'SDO Surigao del Sur',   code:'SDS'},
-  'tan':  {pass:'TAN@2026', role:'sdo',  name:'SDO Tandag City',       code:'TAN'},
+const ACCTS={
+  admin:{pw:'Admin@2026',role:'admin',name:'Regional Office Admin'},
+  adn:{pw:'ADN@2026',role:'sdo',name:'Agusan del Norte'},
+  ads:{pw:'ADS@2026',role:'sdo',name:'Agusan del Sur'},
+  bay:{pw:'BAY@2026',role:'sdo',name:'Bayugan City'},
+  bis:{pw:'BIS@2026',role:'sdo',name:'Bislig City'},
+  but:{pw:'BUT@2026',role:'sdo',name:'Butuan City'},
+  cbr:{pw:'CBR@2026',role:'sdo',name:'Cabadbaran City'},
+  din:{pw:'DIN@2026',role:'sdo',name:'Dinagat Islands'},
+  sia:{pw:'SIA@2026',role:'sdo',name:'Siargao'},
+  sc:{pw:'SC@2026',role:'sdo',name:'Surigao City'},
+  sdn:{pw:'SDN@2026',role:'sdo',name:'Surigao del Norte'},
+  sds:{pw:'SDS@2026',role:'sdo',name:'Surigao del Sur'},
+  tan:{pw:'TAN@2026',role:'sdo',name:'Tandag City'}
 };
+const SDOS=['adn','ads','bay','bis','but','cbr','din','sia','sc','sdn','sds','tan'];
+const SDONAMES={adn:'Agusan del Norte',ads:'Agusan del Sur',bay:'Bayugan City',bis:'Bislig City',but:'Butuan City',cbr:'Cabadbaran City',din:'Dinagat Islands',sia:'Siargao',sc:'Surigao City',sdn:'Surigao del Norte',sds:'Surigao del Sur',tan:'Tandag City'};
+const QS=['Q1','Q2','Q3','Q4'];
 
-const SDO_LIST=[
-  {code:'ADN',name:'Agusan del Norte'},{code:'ADS',name:'Agusan del Sur'},
-  {code:'BAY',name:'Bayugan City'},{code:'BIS',name:'Bislig City'},
-  {code:'BUT',name:'Butuan City'},{code:'CBR',name:'Cabadbaran City'},
-  {code:'DIN',name:'Dinagat Islands'},{code:'SIA',name:'Siargao'},
-  {code:'SC', name:'Surigao City'},{code:'SDN',name:'Surigao del Norte'},
-  {code:'SDS',name:'Surigao del Sur'},{code:'TAN',name:'Tandag City'},
-];
-const QUARTERS=['Q1','Q2','Q3','Q4'];
-
-// ═══════════════════════════════════════════
-// COMPLETE INDICATOR DEFINITIONS
-// ═══════════════════════════════════════════
-const SECTIONS=[
-  {
-    id:'edpol',label:'Education Policy Development Program',
-    groups:[
-      {label:'Outcome Indicators',fields:[
-        {k:'pct_research_policy',    lab:'Percentage of completed education researches used for policy development',       pct:true, roOnly:false},
-        {k:'pct_satisfactory_feedback',lab:'Percentage of satisfactory feedback from clients on issued policies',         pct:true, roOnly:false},
-      ]},
-      {label:'Output Indicators',fields:[
-        {k:'policies_reviewed',      lab:'Number of policies reviewed',                                                   pct:false,roOnly:false},
-        {k:'ed_research_completed',  lab:'Number of education researches completed',                                      pct:false,roOnly:false},
-        {k:'berf_approved',          lab:'Number of proposed research approved (BERF)',                                   pct:false,roOnly:false},
-        {k:'proposed_policies',      lab:'Number of proposed policies reviewed',                                          pct:false,roOnly:false},
-      ]},
-    ]
-  },
-  {
-    id:'beinput',label:'Basic Education Inputs Program',
-    groups:[
-      {label:'Outcome Indicators — Teacher Ratio',fields:[
-        {k:'teacher_ratio_elem',     lab:'% of public schools meeting standard teacher ratio — Elementary',               pct:true, roOnly:false},
-        {k:'teacher_ratio_jhs',      lab:'% of public schools meeting standard teacher ratio — Junior High School',       pct:true, roOnly:false},
-        {k:'teacher_ratio_shs',      lab:'% of public schools meeting standard teacher ratio — Senior High School',       pct:true, roOnly:false},
-      ]},
-      {label:'Outcome Indicators — Classroom Ratio',fields:[
-        {k:'classroom_ratio_1_10',   lab:'% of public schools meeting standard classroom ratio — Grades 1–10',           pct:true, roOnly:false},
-        {k:'classroom_ratio_shs',    lab:'% of public schools meeting standard classroom ratio — Senior High School',     pct:true, roOnly:false},
-      ]},
-      {label:'Outcome Indicators — ICT',fields:[
-        {k:'ict_pct_elem',           lab:'% of public schools provided with ICT package — Elementary',                   pct:true, roOnly:false},
-        {k:'ict_pct_jhs',            lab:'% of public schools provided with ICT package — Junior High School',           pct:true, roOnly:false},
-        {k:'ict_pct_shs',            lab:'% of public schools provided with ICT package — Senior High School',           pct:true, roOnly:false},
-      ]},
-      {label:'Output Indicators',fields:[
-        {k:'classrooms_constructed', lab:'New classrooms constructed',                                                    pct:false,roOnly:false},
-        {k:'classrooms_ongoing',     lab:'New classrooms on-going construction',                                         pct:false,roOnly:false},
-        {k:'sci_math_equip',         lab:'Science & Math equipment distributed',                                         pct:false,roOnly:false},
-        {k:'tvl_equip',              lab:'TVL equipment distributed',                                                     pct:false,roOnly:false},
-        {k:'ict_equip',              lab:'ICT equipment distributed',                                                     pct:false,roOnly:false},
-        {k:'teaching_pos_filled',    lab:'Newly-created teaching positions filled up',                                    pct:false,roOnly:false},
-      ]},
-    ]
-  },
-  {
-    id:'inclusive',label:'Inclusive Education Program',
-    groups:[
-      {label:'Outcome Indicators — Enrollment',fields:[
-        {k:'pct_sned',               lab:'% of learners enrolled in Special Needs Education (SNED) — public',            pct:true, roOnly:false},
-        {k:'pct_alive',              lab:'% of learners enrolled in ALIVE — public and private',                         pct:true, roOnly:false},
-        {k:'pct_iped',               lab:'% of learners enrolled in Indigenous Peoples Education (IPED) — public',       pct:true, roOnly:false},
-        {k:'pct_als',                lab:'% of learners enrolled in Alternative Learning System (ALS)',                  pct:true, roOnly:false},
-        {k:'pct_learning_resources', lab:'% of learners provided with learning resources',                               pct:true, roOnly:false},
-      ]},
-      {label:'Output Indicators',fields:[
-        {k:'schools_alive',          lab:'Number of schools offering ALIVE — public and private',                        pct:false,roOnly:false},
-        {k:'schools_iped',           lab:'Number of schools offering IPED — public',                                     pct:false,roOnly:false},
-        {k:'schools_sned',           lab:'Number of schools offering SNED — public',                                     pct:false,roOnly:false},
-        {k:'schools_learning_res',   lab:'Number of public schools provided with learning resources',                    pct:false,roOnly:false},
-        {k:'pct_errors_addressed',   lab:'Percentage of reported errors in learning resources addressed',                pct:true, roOnly:false},
-      ]},
-    ]
-  },
-  {
-    id:'support',label:'Support to Schools and Learners Program',
-    groups:[
-      {label:'Outcome Indicators',fields:[
-        {k:'retention_elem',         lab:'Retention rate — Elementary',                                                  pct:true, roOnly:false},
-        {k:'retention_secondary',    lab:'Retention rate — Secondary (Grades 7–12)',                                     pct:true, roOnly:false},
-        {k:'completion_elem',        lab:'Completion rate — Elementary',                                                 pct:true, roOnly:false},
-        {k:'completion_secondary',   lab:'Completion rate — Secondary (Grades 7–12)',                                    pct:true, roOnly:false},
-        {k:'nat_elem',               lab:'NAT proficiency — Elementary Grade 6 (%)',                                     pct:true, roOnly:false},
-        {k:'nat_jhs',                lab:'NAT proficiency — JHS Grade 10 (%)',                                           pct:true, roOnly:false},
-        {k:'nat_shs',                lab:'NAT proficiency — SHS Grade 12 (%)',                                           pct:true, roOnly:false},
-      ]},
-      {label:'Output Indicators',fields:[
-        {k:'hot_meals',              lab:'Learners benefitting from SBFP — Hot Meals',                                   pct:false,roOnly:false},
-        {k:'milk',                   lab:'Learners benefitting from SBFP — Milk',                                        pct:false,roOnly:false},
-        {k:'esc_grantees',           lab:'ESC grantees',                                                                 pct:false,roOnly:false},
-        {k:'shsvp_grantees',         lab:'SHSVP grantees',                                                               pct:false,roOnly:false},
-        {k:'jdvp_grantees',          lab:'JDVP grantees',                                                                pct:false,roOnly:false},
-      ]},
-    ]
-  },
-  {
-    id:'hrdev',label:'Education Human Resource Development Program',
-    groups:[
-      {label:'Outcome Indicators',fields:[
-        {k:'pct_lac_increase',       lab:'Increase in % of public schools conducting Learning Action Cell (LAC) sessions',pct:true, roOnly:false},
-        {k:'pct_lac_conducting',     lab:'% of public schools conducting LAC',                                           pct:true, roOnly:false},
-      ]},
-      {label:'Output Indicators',fields:[
-        {k:'teachers_trained',       lab:'Number of teachers trained',                                                   pct:false,roOnly:false},
-        {k:'trp_trained',            lab:'Number of teaching-related personnel trained',                                 pct:false,roOnly:false},
-        {k:'ntp_trained',            lab:'Number of non-teaching personnel trained',                                     pct:false,roOnly:false},
-        {k:'total_schools_lac',      lab:'Total number of schools conducting LAC',                                       pct:false,roOnly:false},
-        {k:'elem_schools_lac',       lab:'Elementary schools conducting LAC',                                            pct:false,roOnly:false},
-        {k:'jhs_schools_lac',        lab:'Junior High Schools conducting LAC',                                           pct:false,roOnly:false},
-        {k:'shs_schools_lac',        lab:'Senior High Schools conducting LAC',                                           pct:false,roOnly:false},
-      ]},
-    ]
-  },
+const PROGRAMS=[
+  {name:'Education Policy Development Program',key:'epdp',color:'#553c9a',ind:[
+    {k:'epdp_research_policy',l:'% of completed education researches used for policy development',u:'%'},
+    {k:'epdp_client_feedback',l:'% of satisfactory feedback from clients on issued policies',u:'%'},
+  ]},
+  {name:'Basic Education Inputs Program',key:'beip',color:'#2b6cb0',ind:[
+    {k:'beip_teacher_elem',l:'% of public schools meeting standard teacher ratio — Elementary',u:'%'},
+    {k:'beip_teacher_jhs',l:'% of public schools meeting standard teacher ratio — JHS',u:'%'},
+    {k:'beip_teacher_shs',l:'% of public schools meeting standard teacher ratio — SHS',u:'%'},
+    {k:'beip_classroom_g110',l:'% of public schools meeting standard classroom ratio — Grades 1–10',u:'%'},
+    {k:'beip_classroom_shs',l:'% of public schools meeting standard classroom ratio — SHS',u:'%'},
+    {k:'beip_ict_elem',l:'% of public schools provided with ICT package — Elementary',u:'%'},
+    {k:'beip_ict_jhs',l:'% of public schools provided with ICT package — JHS',u:'%'},
+    {k:'beip_ict_shs',l:'% of public schools provided with ICT package — SHS',u:'%'},
+  ]},
+  {name:'Inclusive Education Program',key:'iep',color:'#276749',ind:[
+    {k:'iep_enroll_sned',l:'% of learners enrolled in SNED (public)',u:'%'},
+    {k:'iep_enroll_alive',l:'% of learners enrolled in ALIVE (public & private)',u:'%'},
+    {k:'iep_enroll_iped',l:'% of learners enrolled in IPED (public)',u:'%'},
+    {k:'iep_enroll_als',l:'% of learners enrolled in ALS',u:'%'},
+    {k:'iep_learners_lr',l:'% of learners provided with learning resources',u:'%'},
+    {k:'iep_schools_alive',l:'No. of schools offering ALIVE (public & private)',u:''},
+    {k:'iep_schools_iped',l:'No. of schools offering IPED (public)',u:''},
+    {k:'iep_schools_sned',l:'No. of schools offering SNED (public)',u:''},
+    {k:'iep_schools_lr',l:'No. of public schools provided with learning resources',u:''},
+    {k:'iep_lr_errors',l:'% of reported errors in learning resources addressed',u:'%'},
+  ]},
+  {name:'Support to Schools and Learners Program',key:'sslp',color:'#c05621',ind:[
+    {k:'sslp_retention_elem',l:'Retention rate — Elementary',u:'%'},
+    {k:'sslp_retention_sec',l:'Retention rate — Secondary (Grades 7–12)',u:'%'},
+    {k:'sslp_completion_elem',l:'Completion rate — Elementary',u:'%'},
+    {k:'sslp_completion_sec',l:'Completion rate — Secondary (Grades 7–12)',u:'%'},
+    {k:'sslp_nat_elem',l:'NAT Proficiency Rate — Elementary',u:'%'},
+    {k:'sslp_nat_jhs',l:'NAT Proficiency Rate — JHS',u:'%'},
+    {k:'sslp_nat_shs',l:'NAT Proficiency Rate — SHS',u:'%'},
+  ]},
+  {name:'Education Human Resource Development Program',key:'ehrdp',color:'#97266d',ind:[
+    {k:'ehrdp_teachers',l:'No. of teachers trained',u:''},
+    {k:'ehrdp_teaching_rel',l:'No. of teaching-related personnel trained',u:''},
+    {k:'ehrdp_non_teaching',l:'No. of non-teaching personnel trained',u:''},
+    {k:'ehrdp_lac_increase',l:'Increase in % of public schools conducting LAC sessions',u:'%'},
+    {k:'ehrdp_lac_elem',l:'Total no. of schools conducting LAC — Elementary',u:''},
+    {k:'ehrdp_lac_jhs',l:'Total no. of schools conducting LAC — JHS',u:''},
+    {k:'ehrdp_lac_shs',l:'Total no. of schools conducting LAC — SHS',u:''},
+  ]},
+  {name:'Infrastructure and Learning Environment',key:'ile',color:'#744210',ind:[
+    {k:'ile_classrooms_built',l:'No. of classrooms constructed (completed)',u:''},
+    {k:'ile_classrooms_ongoing',l:'No. of classrooms on-going',u:''},
+    {k:'ile_equip_sci',l:'No. of schools with Science/Math equipment distributed',u:''},
+    {k:'ile_equip_tvl',l:'No. of schools with TVL equipment distributed',u:''},
+    {k:'ile_equip_ict',l:'No. of schools with ICT equipment distributed',u:''},
+    {k:'ile_berf_approved',l:'No. of BERF proposals approved',u:''},
+  ]}
 ];
 
-// Flat list of all fields
-const ALL_FIELDS=SECTIONS.flatMap(s=>s.groups.flatMap(g=>g.fields));
+let CU=null,CR=null,CS=null;
+let aData={},aTgt={},roTgt={},uploads=[],pdfCtrl={Q1:false,Q2:false,Q3:false,Q4:false};
+let encQ='Q1',conQ='Q1',editS=SDOS[0],editQ='Q1',roQ='Q1';
 
-// ═══════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════
-let CU=null,AQ='Q1',AT='encode',adminSDO=null;
-let CH={};
-let DATA_CACHE={};    // {sdo:{q:{key:val}}} accomplishments
-let TARGET_CACHE={};  // {sdo:{q:{key:val}}} targets
-let UPLOAD_CACHE={};  // {sdo:{q:[{id,file_name,file_path,uploaded_at}]}}
-
-// ═══════════════════════════════════════════
-// CACHE HELPERS
-// ═══════════════════════════════════════════
-function setCache(cache,sdo,q,key,val){
-  if(!cache[sdo])cache[sdo]={};
-  if(!cache[sdo][q])cache[sdo][q]={};
-  cache[sdo][q][key]=val;
+// ===== DB =====
+async function dbGet(tbl,filters={}){
+  let url=`${SB}/rest/v1/${tbl}?`;
+  url+=Object.entries(filters).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join('&');
+  const r=await fetch(url,{headers:{apikey:SK,Authorization:`Bearer ${SK}`}});
+  return r.json();
 }
-function getD(sdo,q){return(DATA_CACHE[sdo]&&DATA_CACHE[sdo][q])||{};}
-function getT(sdo,q){return(TARGET_CACHE[sdo]&&TARGET_CACHE[sdo][q])||{};}
-function getU(sdo,q){return(UPLOAD_CACHE[sdo]&&UPLOAD_CACHE[sdo][q])||[];}
-function hasD(sdo,q){return Object.values(getD(sdo,q)).some(v=>v!==null&&v!==undefined);}
-
-function rowsToCache(rows,cache){
-  rows.forEach(r=>{
-    if(!cache[r.sdo_code])cache[r.sdo_code]={};
-    if(!cache[r.sdo_code][r.quarter])cache[r.sdo_code][r.quarter]={};
-    cache[r.sdo_code][r.quarter][r.field_key]=r.field_value;
-  });
-}
-function uploadsToCache(rows){
-  rows.forEach(r=>{
-    if(!UPLOAD_CACHE[r.sdo_code])UPLOAD_CACHE[r.sdo_code]={};
-    if(!UPLOAD_CACHE[r.sdo_code][r.quarter])UPLOAD_CACHE[r.sdo_code][r.quarter]=[];
-    if(!UPLOAD_CACHE[r.sdo_code][r.quarter].find(u=>u.id===r.id))
-      UPLOAD_CACHE[r.sdo_code][r.quarter].push(r);
-  });
+async function dbUpsert(tbl,rows){
+  const r=await fetch(`${SB}/rest/v1/${tbl}`,{method:'POST',headers:{apikey:SK,Authorization:`Bearer ${SK}`,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},body:JSON.stringify(rows)});
+  return r.ok;
 }
 
 async function loadAll(){
-  const[data,targets,uploads]=await Promise.all([
-    sbGet('bar1_data'),sbGet('bar1_targets'),sbGet('bar1_uploads')
+  const[dr,tr,ur,sr]=await Promise.all([
+    dbGet('bar1_data'),dbGet('bar1_targets'),dbGet('bar1_uploads'),
+    (async()=>{try{return await dbGet('bar1_data',{sdo_code:'SETTINGS'})}catch{return[]}})()
   ]);
-  DATA_CACHE={}; TARGET_CACHE={};
-  rowsToCache(data,DATA_CACHE);
-  rowsToCache(targets,TARGET_CACHE);
-  UPLOAD_CACHE={};
-  uploadsToCache(uploads);
-}
-async function loadSDO(sdo){
-  const[data,targets,uploads]=await Promise.all([
-    sbGet('bar1_data',`sdo_code=eq.${sdo}`),
-    sbGet('bar1_targets',`sdo_code=eq.${sdo}`),
-    sbGet('bar1_uploads',`sdo_code=eq.${sdo}`)
-  ]);
-  rowsToCache(data,DATA_CACHE);
-  rowsToCache(targets,TARGET_CACHE);
-  uploadsToCache(uploads);
+  aData={};aTgt={};roTgt={};
+  SDOS.forEach(s=>{aData[s]={};aTgt[s]={};QS.forEach(q=>{aData[s][q]={};aTgt[s][q]={}})});
+  QS.forEach(q=>roTgt[q]={});
+  (Array.isArray(dr)?dr:[]).forEach(r=>{
+    if(r.sdo_code==='SETTINGS')return;
+    if(aData[r.sdo_code]&&aData[r.sdo_code][r.quarter]!==undefined)aData[r.sdo_code][r.quarter][r.field_key]=r.field_value;
+  });
+  (Array.isArray(tr)?tr:[]).forEach(r=>{
+    if(r.sdo_code==='RO'){if(roTgt[r.quarter])roTgt[r.quarter][r.field_key]=r.field_value}
+    else if(aTgt[r.sdo_code]&&aTgt[r.sdo_code][r.quarter]!==undefined)aTgt[r.sdo_code][r.quarter][r.field_key]=r.field_value;
+  });
+  uploads=Array.isArray(ur)?ur:[];
+  const sa=Array.isArray(sr)?sr:[];
+  QS.forEach(q=>{const s=sa.find(r=>r.quarter==='global'&&r.field_key===`pdf_upload_${q}`);pdfCtrl[q]=s?s.field_value===1:false});
 }
 
-// ═══════════════════════════════════════════
-// LOGIN
-// ═══════════════════════════════════════════
-async function doLogin(){
+// ===== LOGIN =====
+function doLogin(){
   const u=document.getElementById('lu').value.trim().toLowerCase();
   const p=document.getElementById('lp').value;
-  const acc=ACCOUNTS[u];
-  document.getElementById('loginErr').style.display='none';
-  if(!acc||acc.pass!==p){document.getElementById('loginErr').style.display='block';return;}
-  document.getElementById('loginBtn').disabled=true;
-  document.getElementById('loginSpin').style.display='block';
-  try{
-    if(acc.role==='admin') await loadAll();
-    else await loadSDO(acc.code);
-    CU={...acc,username:u};
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('appShell').style.display='flex';
-    document.getElementById('hdrUser').textContent=CU.name;
-    AT='encode'; AQ='Q1'; adminSDO=null;
-    renderApp();
-  }catch(e){
-    document.getElementById('loginErr').textContent='Connection error. Please check internet and try again.';
-    document.getElementById('loginErr').style.display='block';
-  }
-  document.getElementById('loginBtn').disabled=false;
-  document.getElementById('loginSpin').style.display='none';
+  const a=ACCTS[u];
+  if(!a||a.pw!==p){document.getElementById('lErr').style.display='block';return}
+  document.getElementById('lErr').style.display='none';
+  CU=u;CR=a.role;CS=a.role==='sdo'?u:null;
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  document.getElementById('uBadge').textContent=a.name;
+  init();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
-
 function doLogout(){
-  CU=null; DATA_CACHE={}; TARGET_CACHE={}; UPLOAD_CACHE={};
+  CU=CR=CS=null;
+  document.getElementById('loginPage').style.display='flex';
   document.getElementById('appShell').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('lu').value=''; document.getElementById('lp').value='';
-  document.getElementById('loginErr').style.display='none';
-  Object.values(CH).forEach(c=>c&&c.destroy&&c.destroy()); CH={};
+  document.getElementById('lu').value='';document.getElementById('lp').value='';
+  document.getElementById('sdoTabs').style.display='none';
+  document.getElementById('adminTabs').style.display='none';
 }
-function renderApp(){CU.role==='admin'?renderAdmin():renderSDO();}
+document.addEventListener('keypress',e=>{if(e.key==='Enter')doLogin()});
 
-// ═══════════════════════════════════════════
-// BUILD FORM HTML (shared by SDO + Admin edit)
-// ═══════════════════════════════════════════
-function buildFormHTML(sdo,q,prefix,readonlyTarget=false){
-  const acc=getD(sdo,q);
-  const tgt=getT(sdo,q);
-  let html='';
-  SECTIONS.forEach(sec=>{
-    html+=`<div class="sec-hd">${sec.label}</div>`;
-    sec.groups.forEach(grp=>{
-      html+=`<div class="sub-hd">${grp.label}</div>`;
-      // Header row
-      html+=`<div class="ta-grid header-row">
-        <span>Indicator</span>
-        <span style="color:var(--warn)">Target</span>
-        <span style="color:var(--accent2)">Accomplishment</span>
-      </div>`;
-      grp.fields.forEach(f=>{
-        const tv=tgt[f.k]!==null&&tgt[f.k]!==undefined?tgt[f.k]:'';
-        const av=acc[f.k]!==null&&acc[f.k]!==undefined?acc[f.k]:'';
-        const tAttr=readonlyTarget?'readonly style="opacity:.6"':'';
-        html+=`<div class="ta-grid">
-          <span class="ta-label">${f.lab}${f.pct?' (%)':''}</span>
-          <input class="ta-input target" type="number" min="0" step="${f.pct?'0.01':'1'}"
-            id="${prefix}t_${f.k}" value="${tv}" placeholder="—" ${tAttr}/>
-          <input class="ta-input accomplish" type="number" min="0" step="${f.pct?'0.01':'1'}"
-            id="${prefix}a_${f.k}" value="${av}" placeholder="—"/>
-        </div>`;
-      });
+// ===== TABS =====
+function showTab(e,role,tab){
+  document.querySelectorAll(`#${role}Tabs .tab-btn`).forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  document.querySelectorAll(`#${role}Tabs .tab-content`).forEach(c=>c.classList.remove('active'));
+  const el=document.getElementById(`tab-${role}-${tab}`);
+  if(el){el.classList.add('active');loadAll().then(()=>render(role,tab))}
+}
+function render(role,tab){
+  if(role==='sdo'){
+    if(tab==='encode')rSDOEnc();
+    else if(tab==='summary')rSDOSum();
+    else if(tab==='regional')rSDOReg();
+  }else{
+    if(tab==='dashboard')rAdmDash();
+    else if(tab==='submissions')rAdmSubs();
+    else if(tab==='consolidated')rAdmCon();
+    else if(tab==='edit')rAdmEdit();
+    else if(tab==='rotargets')rAdmROT();
+    else if(tab==='pdfs')rAdmPDFs();
+    else if(tab==='pdfctrl')rAdmPDFCtrl();
+  }
+}
+
+async function init(){
+  if(CR==='sdo'){
+    document.getElementById('sdoTabs').style.display='block';
+    document.getElementById('tab-sdo-encode').innerHTML='<div class="loading"><div class="spinner"></div><p style="margin-top:12px">Loading...</p></div>';
+    await loadAll();rSDOEnc();
+  }else{
+    document.getElementById('adminTabs').style.display='block';
+    document.getElementById('tab-admin-dashboard').innerHTML='<div class="loading"><div class="spinner"></div><p style="margin-top:12px">Loading...</p></div>';
+    await loadAll();rAdmDash();
+  }
+}
+
+// ===== HELPERS =====
+function sumI(k,q){return SDOS.reduce((s,sd)=>s+(parseFloat(aData[sd]?.[q]?.[k])||0),0)}
+function avgI(k,q){const vs=SDOS.map(sd=>aData[sd]?.[q]?.[k]).filter(v=>v!==undefined&&v!==null);return vs.length?vs.reduce((a,b)=>a+parseFloat(b),0)/vs.length:null}
+function dispI(k,q,isPct){if(isPct){const v=avgI(k,q);return v===null?'—':v.toFixed(2)+'%'}else{const v=sumI(k,q);return v===0&&!SDOS.some(s=>aData[s]?.[q]?.[k]!==undefined)?'—':v.toLocaleString()}}
+
+function indRow(ind,t,a,editable,tId,aId){
+  let vHtml='—',vCls='vn';
+  if(t!==undefined&&t!==''&&t!==null&&a!==undefined&&a!==''&&a!==null){
+    const d=parseFloat(a)-parseFloat(t);
+    vHtml=(d>=0?'+':'')+d.toFixed(2)+(ind.u||'');
+    vCls=d>=0?'vm':'vx';
+  }
+  if(editable){
+    return `<tr>
+      <td>${ind.l}</td>
+      <td style="text-align:center"><input class="num-input t-input" type="number" step="any" id="${tId}" value="${t!==undefined&&t!==null?t:''}" placeholder="—"></td>
+      <td style="text-align:center"><input class="num-input a-input" type="number" step="any" id="${aId}" value="${a!==undefined&&a!==null?a:''}" placeholder="—"></td>
+      <td style="text-align:center" class="${vCls}" id="var_${tId.slice(2)}">${vHtml}</td>
+    </tr>`;
+  }else{
+    return `<tr>
+      <td>${ind.l}</td>
+      <td style="text-align:center">${t!==undefined&&t!==null?t:'—'}</td>
+      <td style="text-align:center;font-weight:600">${a!==undefined&&a!==null?a:'—'}</td>
+      <td style="text-align:center" class="${vCls}">${vHtml}</td>
+    </tr>`;
+  }
+}
+
+function indTableHeader(editable){
+  return `<thead><tr>
+    <th style="min-width:300px">Indicator</th>
+    <th style="text-align:center;min-width:100px;background:#b7791f">Target</th>
+    <th style="text-align:center;min-width:100px;background:#276749">Accomplishment</th>
+    <th style="text-align:center;min-width:90px">Variance</th>
+  </tr></thead>`;
+}
+
+function buildFullIndTable(getTgt,getAcm,editable,tPfx,aPfx){
+  let h=`<div style="overflow-x:auto"><table class="ind-table">${indTableHeader(editable)}<tbody>`;
+  PROGRAMS.forEach(p=>{
+    h+=`<tr class="prog-row"><td colspan="4" style="background:${p.color}">${p.name}</td></tr>`;
+    p.ind.forEach(ind=>{
+      const t=getTgt(ind.k),a=getAcm(ind.k);
+      h+=indRow(ind,t,a,editable,`${tPfx}${ind.k}`,`${aPfx}${ind.k}`);
     });
   });
-  return html;
+  return h+'</tbody></table></div>';
 }
 
-// ═══════════════════════════════════════════
-// SDO VIEW
-// ═══════════════════════════════════════════
-function renderSDO(){
-  const sdo=CU.code;
-  document.getElementById('appContent').innerHTML=`
-    <div class="alert alert-info">Logged in as <strong>${CU.name}</strong>. Enter both your <strong style="color:var(--warn)">Target</strong> and <strong style="color:var(--accent2)">Accomplishment</strong> per quarter, then click Save.</div>
-    <div class="tabs">
-      <button class="tab-btn ${AT==='encode'?'active':''}" onclick="sdoTab('encode',this)">Encode Data</button>
-      <button class="tab-btn ${AT==='summary'?'active':''}" onclick="sdoTab('summary',this)">My Summary</button>
-      <button class="tab-btn ${AT==='uploads'?'active':''}" onclick="sdoTab('uploads',this)">Upload BAR 1 PDF</button>
-      <button class="tab-btn ${AT==='regional'?'active':''}" onclick="sdoTab('regional',this)">Regional Totals</button>
-    </div>
-    <div id="tEncode" style="display:${AT==='encode'?'block':'none'}"></div>
-    <div id="tSummary" style="display:${AT==='summary'?'block':'none'}"></div>
-    <div id="tUploads" style="display:${AT==='uploads'?'block':'none'}"></div>
-    <div id="tRegional" style="display:${AT==='regional'?'block':'none'}"></div>
-  `;
-  renderActiveSDOTab(sdo);
+async function saveRows(sdoCode,q,tPfx,aPfx,msgId){
+  const msg=document.getElementById(msgId);
+  if(msg)msg.innerHTML='<div class="alert al-i">Saving to cloud...</div>';
+  const ar=[],tr=[];
+  PROGRAMS.forEach(p=>p.ind.forEach(i=>{
+    const tv=document.getElementById(`${tPfx}${i.k}`)?.value;
+    const av=document.getElementById(`${aPfx}${i.k}`)?.value;
+    if(tv!==undefined&&tv!=='')tr.push({sdo_code:sdoCode,quarter:q,field_key:i.k,field_value:parseFloat(tv)});
+    if(av!==undefined&&av!=='')ar.push({sdo_code:sdoCode,quarter:q,field_key:i.k,field_value:parseFloat(av)});
+  }));
+  try{
+    if(ar.length)await dbUpsert('bar1_data',ar);
+    if(tr.length)await dbUpsert('bar1_targets',tr);
+    if(msg)msg.innerHTML='<div class="alert al-s">✅ Saved to cloud successfully!</div>';
+    await loadAll();
+    setTimeout(()=>{if(msg)msg.innerHTML=''},3000);
+    return true;
+  }catch(e){
+    if(msg)msg.innerHTML='<div class="alert al-d">❌ Error saving. Please try again.</div>';
+    return false;
+  }
 }
 
-function sdoTab(t,btn){
-  AT=t;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  ['encode','summary','uploads','regional'].forEach(x=>{
-    const el=document.getElementById('t'+x.charAt(0).toUpperCase()+x.slice(1));
-    if(el)el.style.display=x===t?'block':'none';
-  });
-  renderActiveSDOTab(CU.code);
-}
+// ===== SDO: ENCODE =====
+function rSDOEnc(){
+  const el=document.getElementById('tab-sdo-encode');
+  const tbl=buildFullIndTable(
+    k=>aTgt[CS]?.[encQ]?.[k],
+    k=>aData[CS]?.[encQ]?.[k],
+    true,'te_','ae_'
+  );
+  const upEn=pdfCtrl[encQ];
+  const myUps=uploads.filter(u=>u.sdo_code===CS&&u.quarter===encQ);
 
-function renderActiveSDOTab(sdo){
-  if(AT==='encode') renderSDOEncode(sdo);
-  if(AT==='summary') renderSDOSummary(sdo);
-  if(AT==='uploads') renderSDOUploads(sdo);
-  if(AT==='regional') renderRegional();
-}
+  let upHtml=upEn?`
+    <div class="section-card">
+      <div class="section-title">📎 Upload BAR 1 PDF — ${encQ} 2026</div>
+      <div class="alert al-i" style="font-size:12px">Upload the approved BAR 1 PDF report for ${encQ}. Multiple files allowed.</div>
+      <div class="upload-area" onclick="document.getElementById('pfi').click()">
+        <div style="font-size:30px">📄</div>
+        <div style="margin-top:8px;font-size:14px;color:#4a5568">Click to select PDF files</div>
+        <div style="font-size:11px;color:#a0aec0;margin-top:3px">PDF files only</div>
+      </div>
+      <input type="file" id="pfi" accept=".pdf" multiple style="display:none" onchange="doUpload(this)">
+      <div id="upMsg"></div>
+      ${myUps.length?`<div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#4a5568">${myUps.length} file(s) uploaded:</div>
+      ${myUps.map(u=>`<div class="upload-item"><span>📄 ${u.file_name}</span><a href="${SB}/storage/v1/object/public/bar1-uploads/${u.file_path}" target="_blank" class="btn btn-p" style="padding:4px 10px;font-size:12px">View</a></div>`).join('')}`:'<div style="font-size:12px;color:#a0aec0">No files uploaded yet for this quarter.</div>'}
+    </div>`
+  :`<div class="section-card"><div class="alert al-w">📎 PDF upload for <strong>${encQ}</strong> is currently <strong>disabled</strong> by the Regional Office.</div></div>`;
 
-function renderSDOEncode(sdo){
-  const el=document.getElementById('tEncode');
-  if(!el)return;
   el.innerHTML=`
-    <div class="row-between">
-      <span style="font-size:13px;font-weight:500;color:var(--text2)">Select quarter:</span>
-      <div class="quarter-tabs">${QUARTERS.map(q=>`<button class="qtab ${q===AQ?'active':''}" onclick="selQ('${q}')">${q}</button>`).join('')}</div>
-    </div>
-    <div class="legend-row">
-      <span><span class="ldot" style="background:#fffbf0;border:1px solid #e8d5a0"></span>Target</span>
-      <span><span class="ldot" style="background:#f0f9f5;border:1px solid #a8d5c0"></span>Accomplishment</span>
-    </div>
-    <div class="card">
-      <div class="card-title">BAR 1 — ${AQ} CY 2026 &nbsp;·&nbsp; ${CU.name}</div>
-      ${buildFormHTML(sdo,AQ,'sdo_',false)}
-      <button class="btn-save" id="btnSave" onclick="sdoSave()">☁️ Save ${AQ} Data to Cloud</button>
-      <div class="save-msg" id="sMsg"></div>
-    </div>`;
+    <div class="section-card">
+      <div class="section-title">📝 Encode Data — ${SDONAMES[CS]}</div>
+      <div class="qtabs">${QS.map(q=>`<button class="qtab ${q===encQ?'active':''}" onclick="encQ='${q}';rSDOEnc()">${q} 2026</button>`).join('')}</div>
+      <div id="encMsg"></div>
+      ${tbl}
+      <div style="margin-top:14px"><button class="btn btn-s" onclick="saveSDO()">☁️ Save ${encQ} Data to Cloud</button></div>
+    </div>${upHtml}`;
+  attachLiveVar('te_','ae_');
 }
 
-function selQ(q){AQ=q;renderSDOEncode(CU.code);}
+function attachLiveVar(tp,ap){
+  PROGRAMS.forEach(p=>p.ind.forEach(i=>{
+    const te=document.getElementById(`${tp}${i.k}`),ae=document.getElementById(`${ap}${i.k}`);
+    if(te&&ae){
+      const upd=()=>{
+        const vEl=document.getElementById(`var_${i.k}`);
+        if(!vEl)return;
+        const t=parseFloat(te.value),a=parseFloat(ae.value);
+        if(!isNaN(t)&&!isNaN(a)){const d=a-t;vEl.textContent=(d>=0?'+':'')+d.toFixed(2)+(i.u||'');vEl.className=d>=0?'vm':'vx'}
+        else{vEl.textContent='—';vEl.className='vn'}
+      };
+      te.addEventListener('input',upd);ae.addEventListener('input',upd);
+    }
+  }));
+}
 
-async function sdoSave(){
-  const sdo=CU.code;
-  const btn=document.getElementById('btnSave');
-  const msg=document.getElementById('sMsg');
-  btn.disabled=true; btn.textContent='Saving...'; msg.style.display='none';
-  const accRows=[],tgtRows=[];
-  const now=new Date().toISOString();
-  ALL_FIELDS.forEach(f=>{
-    const ta=document.getElementById('sdo_t_'+f.k);
-    const aa=document.getElementById('sdo_a_'+f.k);
-    if(ta&&ta.value!=='')tgtRows.push({sdo_code:sdo,quarter:AQ,field_key:f.k,field_value:parseFloat(ta.value),updated_at:now});
-    if(aa&&aa.value!=='')accRows.push({sdo_code:sdo,quarter:AQ,field_key:f.k,field_value:parseFloat(aa.value),updated_at:now});
-  });
-  try{
-    if(tgtRows.length)await sbUpsert('bar1_targets',tgtRows);
-    if(accRows.length)await sbUpsert('bar1_data',accRows);
-    tgtRows.forEach(r=>setCache(TARGET_CACHE,sdo,AQ,r.field_key,r.field_value));
-    accRows.forEach(r=>setCache(DATA_CACHE,sdo,AQ,r.field_key,r.field_value));
-    msg.className='save-msg msg-ok'; msg.textContent='✓ Data saved to cloud successfully!';
-  }catch(e){
-    msg.className='save-msg msg-err'; msg.textContent='✗ Save failed. Check your internet connection.';
+async function saveSDO(){await saveRows(CS,encQ,'te_','ae_','encMsg')}
+
+async function doUpload(inp){
+  const msg=document.getElementById('upMsg');
+  const files=Array.from(inp.files).filter(f=>f.type==='application/pdf');
+  if(!files.length){msg.innerHTML='<div class="alert al-d">PDF files only.</div>';return}
+  msg.innerHTML='<div class="alert al-i">Uploading...</div>';
+  let ok=0;
+  for(const f of files){
+    const fp=`${CS}/${encQ}/${Date.now()}_${f.name}`;
+    const r=await fetch(`${SB}/storage/v1/object/bar1-uploads/${fp}`,{method:'POST',headers:{apikey:SK,Authorization:`Bearer ${SK}`,'Content-Type':'application/pdf'},body:f});
+    if(r.ok){await dbUpsert('bar1_uploads',[{sdo_code:CS,quarter:encQ,file_name:f.name,file_path:fp}]);ok++}
   }
-  msg.style.display='block';
-  btn.disabled=false; btn.textContent=`☁️ Save ${AQ} Data to Cloud`;
-  setTimeout(()=>msg.style.display='none',4000);
+  msg.innerHTML=`<div class="alert al-s">✅ ${ok} file(s) uploaded!</div>`;
+  await loadAll();rSDOEnc();
 }
 
-function renderSDOSummary(sdo){
-  const el=document.getElementById('tSummary');
-  if(!el)return;
-  let html='';
-  SECTIONS.forEach(sec=>{
-    html+=`<div class="card"><div class="card-title">${sec.label}</div><div class="tbl-wrap"><table>
-      <thead><tr><th>Indicator</th>
-      ${QUARTERS.map(q=>`<th class="th-target num">${q} Target</th><th class="th-accomplish num">${q} Acc.</th><th class="th-variance num">${q} Var.</th>`).join('')}
-      </tr></thead><tbody>`;
-    sec.groups.forEach(grp=>{
-      html+=`<tr><td colspan="${1+QUARTERS.length*3}" style="background:var(--surface2);font-size:11px;font-weight:600;color:var(--text2);padding:5px 10px">${grp.label}</td></tr>`;
-      grp.fields.forEach(f=>{
-        html+=`<tr><td>${f.lab}${f.pct?' (%)':''}</td>`;
-        QUARTERS.forEach(q=>{
-          const t=getT(sdo,q)[f.k];const a=getD(sdo,q)[f.k];
-          const td=(t===null||t===undefined)?'—':(f.pct?Number(t).toFixed(1)+'%':Number(t).toLocaleString());
-          const ad=(a===null||a===undefined)?'—':(f.pct?Number(a).toFixed(1)+'%':Number(a).toLocaleString());
-          let vd='—',vcls='variance-cell';
-          if(t!==null&&t!==undefined&&a!==null&&a!==undefined){
-            const v=Number(a)-Number(t);
-            vd=(f.pct?v.toFixed(1)+'%':v.toLocaleString());
-            vcls='variance-cell '+(v>=0?'var-pos':'var-neg');
-          }
-          html+=`<td class="target-cell">${td}</td><td class="accomplish-cell">${ad}</td><td class="${vcls}">${vd}</td>`;
+// ===== SDO: SUMMARY =====
+function rSDOSum(){
+  const el=document.getElementById('tab-sdo-summary');
+  let h=`<div class="section-card"><div class="section-title">📊 My Summary — ${SDONAMES[CS]}</div>`;
+  QS.forEach(q=>{
+    const d=aData[CS]?.[q]||{},t=aTgt[CS]?.[q]||{};
+    const has=Object.keys(d).length>0||Object.keys(t).length>0;
+    h+=`<div style="margin-bottom:18px"><div style="font-weight:700;font-size:13px;margin-bottom:10px;padding:8px 12px;background:#ebf8ff;border-radius:8px;color:#2c5282">${q} 2026 ${has?'<span class="badge bg" style="margin-left:8px">Data Submitted</span>':'<span class="badge bgr" style="margin-left:8px">No Data Yet</span>'}</div>`;
+    if(has){
+      h+=`<div style="overflow-x:auto"><table class="ind-table">${indTableHeader(false)}<tbody>`;
+      PROGRAMS.forEach(p=>{
+        if(!p.ind.some(i=>d[i.k]!==undefined||t[i.k]!==undefined))return;
+        h+=`<tr class="prog-row"><td colspan="4" style="background:${p.color}">${p.name}</td></tr>`;
+        p.ind.forEach(i=>{
+          if(d[i.k]===undefined&&t[i.k]===undefined)return;
+          h+=indRow(i,t[i.k],d[i.k],false,'','');
         });
-        html+=`</tr>`;
       });
-    });
-    html+=`</tbody></table></div></div>`;
+      h+='</tbody></table></div>';
+    }
+    h+='</div>';
   });
-  el.innerHTML=html||'<div class="alert alert-warn">No data encoded yet.</div>';
+  h+='</div>';el.innerHTML=h;
 }
 
-function renderSDOUploads(sdo){
-  const el=document.getElementById('tUploads');
-  if(!el)return;
-  const qSections=QUARTERS.map(q=>{
-    const uploads=getU(sdo,q);
-    const listHtml=uploads.length?uploads.map(u=>`
-      <div class="upload-item">
-        <div>
-          <a href="${u.file_path}" target="_blank">📄 ${u.file_name}</a>
-          <div class="upload-time">Uploaded: ${new Date(u.uploaded_at).toLocaleString()}</div>
-        </div>
-        <button class="btn-del" onclick="deleteUpload(${u.id},'${sdo}','${q}')">✕ Remove</button>
-      </div>`).join('')
-      :'<div style="font-size:12px;color:var(--text3);padding:.5rem 0">No files uploaded yet.</div>';
-    return`<div class="card"><div class="card-title">BAR 1 PDF — ${q} CY 2026</div>
-      <div class="upload-area" onclick="document.getElementById('file_${q}').click()">
-        <input type="file" id="file_${q}" accept=".pdf" onchange="uploadPDF('${sdo}','${q}',this)"/>
-        <label class="upload-label">Click to upload PDF &nbsp;·&nbsp; <strong>BAR 1 ${q} ${sdo}</strong></label>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">PDF files only &nbsp;·&nbsp; Multiple files allowed</div>
+// ===== SDO: REGIONAL =====
+function rSDOReg(){
+  const el=document.getElementById('tab-sdo-regional');
+  let h=`<div class="section-card"><div class="section-title">🌐 Regional Totals (All 12 SDOs)</div>
+    <div class="alert al-i" style="font-size:12px">Regional totals/averages only. Individual SDO figures are not shown.</div>`;
+  QS.forEach(q=>{
+    h+=`<div style="margin-bottom:18px"><div style="font-weight:700;font-size:13px;margin-bottom:10px;padding:8px 12px;background:#ebf8ff;border-radius:8px;color:#2c5282">${q} 2026</div>
+      <div style="overflow-x:auto"><table class="ind-table"><thead><tr><th style="min-width:300px">Indicator</th><th style="text-align:center">Regional Total / Average</th></tr></thead><tbody>`;
+    PROGRAMS.forEach(p=>{
+      h+=`<tr class="prog-row"><td colspan="2" style="background:${p.color}">${p.name}</td></tr>`;
+      p.ind.forEach(i=>{
+        const isPct=i.u==='%';
+        const v=dispI(i.k,q,isPct);
+        h+=`<tr><td>${i.l}</td><td style="text-align:center;font-weight:600">${v}</td></tr>`;
+      });
+    });
+    h+='</tbody></table></div></div>';
+  });
+  h+='</div>';el.innerHTML=h;
+}
+
+// ===== ADMIN: DASHBOARD =====
+function rAdmDash(){
+  const el=document.getElementById('tab-admin-dashboard');
+  // KPIs
+  const subs1=SDOS.filter(s=>Object.keys(aData[s]?.['Q1']||{}).length>0).length;
+  const trained=sumI('ehrdp_teachers','Q1')+sumI('ehrdp_teaching_rel','Q1')+sumI('ehrdp_non_teaching','Q1');
+  const rooms=sumI('ile_classrooms_built','Q1');
+  const berf=sumI('ile_berf_approved','Q1');
+
+  let h=`<div class="kpi-grid">
+    <div class="kpi-card" style="border-left-color:#38a169"><div class="kpi-label">SDOs Submitted (Q1)</div><div class="kpi-value">${subs1}<span style="font-size:15px;color:#718096">/12</span></div><div class="kpi-sub">Divisions with Q1 data</div></div>
+    <div class="kpi-card" style="border-left-color:#3182ce"><div class="kpi-label">Personnel Trained (Q1)</div><div class="kpi-value">${trained.toLocaleString()}</div><div class="kpi-sub">Teachers + non-teaching</div></div>
+    <div class="kpi-card" style="border-left-color:#d69e2e"><div class="kpi-label">Classrooms Constructed (Q1)</div><div class="kpi-value">${rooms.toLocaleString()}</div><div class="kpi-sub">Completed classrooms</div></div>
+    <div class="kpi-card" style="border-left-color:#553c9a"><div class="kpi-label">BERF Approved (Q1)</div><div class="kpi-value">${berf.toLocaleString()}</div><div class="kpi-sub">Research proposals</div></div>
+  </div>`;
+
+  // Full indicator dashboard per program
+  PROGRAMS.forEach(p=>{
+    h+=`<div class="section-card">
+      <div class="section-title" style="color:${p.color}">📋 ${p.name}</div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr>
+          <th style="min-width:280px">Indicator</th>
+          ${QS.map(q=>`<th style="text-align:center;min-width:110px">RO Target<br><span style="font-weight:400;font-size:10px">${q}</span></th><th style="text-align:center;min-width:110px">Regional Total<br><span style="font-weight:400;font-size:10px">${q}</span></th>`).join('')}
+        </tr></thead><tbody>`;
+    p.ind.forEach(i=>{
+      const isPct=i.u==='%';
+      h+=`<tr><td>${i.l}</td>`;
+      QS.forEach(q=>{
+        const roT=roTgt[q]?.[i.k];
+        const val=isPct?avgI(i.k,q):sumI(i.k,q);
+        const hasData=SDOS.some(s=>aData[s]?.[q]?.[i.k]!==undefined);
+        const totalDisp=!hasData?'—':(isPct?val.toFixed(2)+'%':val.toLocaleString());
+        const roDisp=roT!==undefined?roT+(i.u||''):'—';
+        let varHtml='';
+        if(hasData&&val!==null&&roT!==undefined){
+          const d=val-roT;
+          varHtml=` <span class="${d>=0?'vm':'vx'}" style="font-size:11px">(${d>=0?'+':''}${d.toFixed(1)})</span>`;
+        }
+        h+=`<td style="text-align:center;color:#744210;font-size:12px">${roDisp}</td>
+            <td style="text-align:center;font-weight:600;font-size:12px">${totalDisp}${varHtml}</td>`;
+      });
+      h+='</tr>';
+    });
+    h+='</tbody></table></div></div>';
+  });
+  el.innerHTML=h;
+}
+
+// ===== ADMIN: SUBMISSIONS =====
+function rAdmSubs(){
+  const el=document.getElementById('tab-admin-submissions');
+  let h=`<div style="font-size:16px;font-weight:700;color:#1a365d;margin-bottom:16px">📋 SDO Submissions Overview</div>
+    <div class="sdo-grid">`;
+  SDOS.forEach(s=>{
+    const sq=QS.filter(q=>Object.keys(aData[s]?.[q]||{}).length>0);
+    const cls=sq.length===0?'':sq.length===4?'submitted':'partial';
+    h+=`<div class="sdo-card ${cls}" onclick="viewSDO('${s}')">
+      <div class="sdo-name">${SDONAMES[s]}</div>
+      <div style="font-size:11px;color:#718096;margin-bottom:8px">Click to view details</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${QS.map(q=>`<span class="badge ${Object.keys(aData[s]?.[q]||{}).length>0?'bg':'bgr'}">${q}</span>`).join('')}
       </div>
-      <div id="upMsg_${q}" class="save-msg" style="margin-bottom:.5rem"></div>
-      <div class="upload-list">${listHtml}</div>
+      <div style="margin-top:8px;font-size:12px;color:${sq.length?'#276749':'#a0aec0'}">${sq.length?sq.length+' quarter(s) submitted':'No data submitted yet'}</div>
     </div>`;
-  }).join('');
-  el.innerHTML=`<div class="alert alert-info">Upload your approved BAR 1 PDF documents here. Multiple files allowed per quarter.</div>${qSections}`;
-}
-
-async function uploadPDF(sdo,q,input){
-  const file=input.files[0];
-  if(!file)return;
-  if(file.type!=='application/pdf'){alert('Please select a PDF file only.');input.value='';return;}
-  const msg=document.getElementById('upMsg_'+q);
-  msg.className='save-msg msg-ok'; msg.textContent='⏳ Uploading...'; msg.style.display='block';
-  try{
-    const path=`${sdo}/${q}/${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
-    const url=await sbUploadFile(path,file);
-    const row={sdo_code:sdo,quarter:q,file_name:file.name,file_path:url};
-    const inserted=await sbInsert('bar1_uploads',row);
-    if(!UPLOAD_CACHE[sdo])UPLOAD_CACHE[sdo]={};
-    if(!UPLOAD_CACHE[sdo][q])UPLOAD_CACHE[sdo][q]=[];
-    UPLOAD_CACHE[sdo][q].push(inserted[0]||{...row,id:Date.now(),uploaded_at:new Date().toISOString()});
-    msg.textContent='✓ File uploaded successfully!';
-    renderSDOUploads(sdo);
-  }catch(e){
-    msg.className='save-msg msg-err'; msg.textContent='✗ Upload failed. Check internet connection.';
-  }
-  input.value='';
-  setTimeout(()=>msg.style.display='none',4000);
-}
-
-async function deleteUpload(id,sdo,q){
-  if(!confirm('Remove this file?'))return;
-  try{
-    await sbDelete('bar1_uploads',`id=eq.${id}`);
-    if(UPLOAD_CACHE[sdo]&&UPLOAD_CACHE[sdo][q])
-      UPLOAD_CACHE[sdo][q]=UPLOAD_CACHE[sdo][q].filter(u=>u.id!==id);
-    renderSDOUploads(sdo);
-  }catch(e){alert('Delete failed. Try again.');}
-}
-
-function renderRegional(){
-  const el=document.getElementById('tRegional');
-  if(!el)return;
-  const kf=[
-    {k:'teachers_trained',lab:'Teachers trained'},
-    {k:'trp_trained',lab:'Teaching-related personnel trained'},
-    {k:'ntp_trained',lab:'Non-teaching personnel trained'},
-    {k:'total_schools_lac',lab:'Schools conducting LAC'},
-    {k:'classrooms_constructed',lab:'Classrooms constructed'},
-    {k:'classrooms_ongoing',lab:'Classrooms on-going'},
-    {k:'berf_approved',lab:'BERF proposals approved'},
-    {k:'sci_math_equip',lab:'Sci/Math equipment distributed'},
-    {k:'ict_equip',lab:'ICT equipment distributed'},
-    {k:'hot_meals',lab:'SBFP Hot Meals beneficiaries'},
-    {k:'esc_grantees',lab:'ESC grantees'},
-  ];
-  const rows=kf.map(f=>{
-    const cells=QUARTERS.map(q=>{
-      let tot=0;
-      SDO_LIST.forEach(s=>{const v=getD(s.code,q)[f.k];if(v!==null&&v!==undefined)tot+=Number(v);});
-      return`<td class="num">${tot>0?tot.toLocaleString():'—'}</td>`;
-    }).join('');
-    const cnt=SDO_LIST.filter(s=>QUARTERS.some(q=>{const v=getD(s.code,q)[f.k];return v!==null&&v!==undefined;})).length;
-    return`<tr><td>${f.lab}</td>${cells}<td><span class="badge ${cnt===12?'b-ok':cnt>0?'b-warn':'b-na'}">${cnt}/12</span></td></tr>`;
-  }).join('');
-  el.innerHTML=`
-    <div class="alert alert-info">Regional totals across all 12 SDOs. Individual SDO data is not shown to other SDOs.</div>
-    <div class="card"><div class="card-title">Regional accomplishment totals — CY 2026</div>
-    <div class="tbl-wrap"><table>
-    <thead><tr><th>Indicator</th>${QUARTERS.map(q=>`<th class="num">${q}</th>`).join('')}<th>SDOs reporting</th></tr></thead>
-    <tbody>${rows}</tbody></table></div></div>`;
-}
-
-// ═══════════════════════════════════════════
-// ADMIN VIEW
-// ═══════════════════════════════════════════
-function renderAdmin(){
-  const kpi=getKPIs();
-  const sdoCards=SDO_LIST.map(s=>{
-    const any=QUARTERS.some(q=>hasD(s.code,q));
-    const qs=QUARTERS.filter(q=>hasD(s.code,q));
-    const uploads=QUARTERS.reduce((t,q)=>t+getU(s.code,q).length,0);
-    return`<div class="sdo-card ${any?'has-data':''}" onclick="viewSDO('${s.code}')">
-      <div class="sdo-name">${s.name}</div>
-      <div class="sdo-status">${any?'Submitted: '+qs.join(', '):'No data yet'}${uploads>0?' &nbsp;·&nbsp; '+uploads+' PDF(s)':''}</div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('appContent').innerHTML=`
-    <div class="tabs">
-      <button class="tab-btn ${AT==='dashboard'?'active':''}" onclick="aTab('dashboard',this)">Dashboard</button>
-      <button class="tab-btn ${AT==='rotargets'?'active':''}" onclick="aTab('rotargets',this)">RO Annual Targets</button>
-      <button class="tab-btn ${AT==='submissions'?'active':''}" onclick="aTab('submissions',this)">SDO Submissions</button>
-      <button class="tab-btn ${AT==='consolidated'?'active':''}" onclick="aTab('consolidated',this)">Consolidated Table</button>
-      <button class="tab-btn ${AT==='pdfs'?'active':''}" onclick="aTab('pdfs',this)">Uploaded PDFs</button>
-      <button class="tab-btn ${AT==='edit'?'active':''}" onclick="aTab('edit',this)">Edit SDO Data</button>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div id="aDash" style="display:${AT==='dashboard'?'block':'none'}">
-      <div class="row-between" style="margin-bottom:.75rem">
-        <span style="font-size:13px;color:var(--text2)">Live data from Supabase cloud</span>
-        <button class="btn-save" style="margin-top:0;padding:6px 16px;font-size:12px" onclick="refreshAdmin()">↻ Refresh</button>
-      </div>
-      <div class="kpi-grid">
-        <div class="kpi" style="--kpi-c:var(--accent)"><div class="kpi-label">Total trained</div><div class="kpi-value">${kpi.trained.toLocaleString()}</div><div class="kpi-sub">All SDOs · all quarters</div></div>
-        <div class="kpi" style="--kpi-c:var(--accent2)"><div class="kpi-label">SDOs with data</div><div class="kpi-value">${kpi.sdoCount}/12</div><div class="kpi-sub">At least 1 quarter submitted</div></div>
-        <div class="kpi" style="--kpi-c:var(--warn)"><div class="kpi-label">Classrooms constructed</div><div class="kpi-value">${kpi.constructed}</div><div class="kpi-sub">+ ${kpi.ongoing} on-going</div></div>
-        <div class="kpi" style="--kpi-c:var(--purple)"><div class="kpi-label">BERF proposals</div><div class="kpi-value">${kpi.berf}</div><div class="kpi-sub">Approved CY 2026</div></div>
-        <div class="kpi" style="--kpi-c:var(--accent2)"><div class="kpi-label">PDF uploads</div><div class="kpi-value">${kpi.pdfs}</div><div class="kpi-sub">Total across all SDOs</div></div>
-      </div>
-      <div class="grid2">
-        <div class="card"><div class="card-title">Quarters submitted per SDO</div><div class="chart-wrap" style="height:230px"><canvas id="cSub"></canvas></div></div>
-        <div class="card"><div class="card-title">Personnel trained per quarter</div><div class="chart-wrap" style="height:230px"><canvas id="cQtr"></canvas></div></div>
-      </div>
-      <div class="card"><div class="card-title">Teachers trained per SDO — all quarters</div><div class="chart-wrap" style="height:180px"><canvas id="cSdo"></canvas></div></div>
-    </div>
-
-    <!-- RO TARGETS -->
-    <div id="aRotargets" style="display:${AT==='rotargets'?'block':'none'}">
-      <div class="alert alert-info"><strong>Regional Office Annual Targets.</strong> These targets apply to the whole region for CY 2026. Set them once — SDOs will see them as reference when encoding their own targets.</div>
-      <div class="card">
-        <div class="card-title">RO Annual Targets — CY 2026</div>
-        ${buildROTargetsForm()}
-        <button class="btn-save" id="btnROSave" onclick="saveROTargets()">☁️ Save RO Annual Targets</button>
-        <div class="save-msg" id="roMsg"></div>
-      </div>
-    </div>
-
-    <!-- SUBMISSIONS -->
-    <div id="aSub" style="display:${AT==='submissions'?'block':'none'}">
-      <div class="alert alert-info">Click any SDO card to view their full submitted data. <span style="color:var(--accent2);font-weight:600">Green border</span> = data submitted.</div>
-      <div class="sdo-grid">${sdoCards}</div>
-      <div id="sdoDetail"></div>
-    </div>
-
-    <!-- CONSOLIDATED -->
-    <div id="aCon" style="display:${AT==='consolidated'?'block':'none'}">${buildConsolidated()}</div>
-
-    <!-- PDFS -->
-    <div id="aPdfs" style="display:${AT==='pdfs'?'block':'none'}">${buildAllPDFs()}</div>
-
-    <!-- EDIT -->
-    <div id="aEdit" style="display:${AT==='edit'?'block':'none'}">
-      <div class="row-between">
-        <span style="font-size:13px;color:var(--text2);font-weight:500">Select SDO and quarter:</span>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select class="isel" id="eSdo" onchange="loadEdit()">
-            ${SDO_LIST.map(s=>`<option value="${s.code}">${s.name}</option>`).join('')}
-          </select>
-          <select class="isel" id="eQ" onchange="loadEdit()">
-            ${QUARTERS.map(q=>`<option>${q}</option>`).join('')}
-          </select>
-        </div>
-      </div>
-      <div id="editForm"></div>
-    </div>
-  `;
-
-  setTimeout(()=>{
-    buildAdminCharts();
-    if(AT==='edit') loadEdit();
-    if(adminSDO) showSDODetail(adminSDO);
-  },50);
-}
-
-function aTab(t,btn){
-  AT=t;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const map={dashboard:'aDash',rotargets:'aRotargets',submissions:'aSub',consolidated:'aCon',pdfs:'aPdfs',edit:'aEdit'};
-  Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.style.display=k===t?'block':'none';});
-  if(t==='edit') loadEdit();
-}
-
-async function refreshAdmin(){
-  document.getElementById('appContent').innerHTML=`<div class="loading"><span class="spinner"></span>Refreshing data from cloud...</div>`;
-  await loadAll();
-  renderAdmin();
-}
-
-function getKPIs(){
-  let trained=0,constructed=0,ongoing=0,berf=0,sdoCount=0,pdfs=0;
-  SDO_LIST.forEach(s=>{
-    let any=false;
-    QUARTERS.forEach(q=>{
-      const d=getD(s.code,q);
-      trained+=(Number(d.teachers_trained)||0)+(Number(d.trp_trained)||0)+(Number(d.ntp_trained)||0);
-      constructed+=Number(d.classrooms_constructed)||0;
-      ongoing+=Number(d.classrooms_ongoing)||0;
-      berf+=Number(d.berf_approved)||0;
-      pdfs+=getU(s.code,q).length;
-      if(hasD(s.code,q))any=true;
-    });
-    if(any)sdoCount++;
   });
-  return{trained,constructed,ongoing,berf,sdoCount,pdfs};
+  h+=`</div><div id="sdoDetail" style="margin-top:20px"></div>`;
+  el.innerHTML=h;
 }
 
-function buildAdminCharts(){
-  Object.values(CH).forEach(c=>c&&c.destroy&&c.destroy()); CH={};
-  const SHORT=SDO_LIST.map(s=>s.name.replace('Surigao del','Sur.').replace('Agusan del','Ag.').replace(' City','').replace(' Islands',''));
-  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#9b9890',maxRotation:45}},y:{ticks:{font:{size:10},color:'#9b9890'}}}};
-  const subData=SDO_LIST.map(s=>QUARTERS.filter(q=>hasD(s.code,q)).length);
-  CH.cSub=new Chart(document.getElementById('cSub'),{type:'bar',data:{labels:SHORT,datasets:[{data:subData,backgroundColor:subData.map(v=>v===4?'#0e7a5c':'#1a4fa8'),borderRadius:4}]},options:{...base,scales:{x:{ticks:{font:{size:10},color:'#9b9890',maxRotation:45}},y:{max:4,ticks:{stepSize:1,font:{size:10},color:'#9b9890'}}}}});
-  const qT=QUARTERS.map(q=>SDO_LIST.reduce((s,sdo)=>{const d=getD(sdo.code,q);return s+(Number(d.teachers_trained)||0)+(Number(d.trp_trained)||0)+(Number(d.ntp_trained)||0);},0));
-  CH.cQtr=new Chart(document.getElementById('cQtr'),{type:'bar',data:{labels:QUARTERS,datasets:[{data:qT,backgroundColor:['#1a4fa8','#0e7a5c','#b85c00','#5b3fa8'],borderRadius:4}]},options:{...base,scales:{x:{ticks:{font:{size:12},color:'#9b9890'}},y:{ticks:{font:{size:10},color:'#9b9890'}}}}});
-  CH.cSdo=new Chart(document.getElementById('cSdo'),{type:'bar',data:{labels:SHORT,datasets:[{data:SDO_LIST.map(s=>QUARTERS.reduce((t,q)=>{const d=getD(s.code,q);return t+(Number(d.teachers_trained)||0);},0)),backgroundColor:'#1a4fa8',borderRadius:4}]},options:{...base}});
-}
-
-// ─── RO TARGETS ─────────────────────────────
-function buildROTargetsForm(){
-  let html='<div class="alert alert-warn">These are the <strong>annual regional targets</strong> for CY 2026. Enter one target value per indicator — not per quarter.</div>';
-  SECTIONS.forEach(sec=>{
-    html+=`<div class="sec-hd">${sec.label}</div>`;
-    sec.groups.forEach(grp=>{
-      html+=`<div class="sub-hd">${grp.label}</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px;margin-bottom:.5rem">`;
-      grp.fields.forEach(f=>{
-        const v=getT('RO','ANNUAL')[f.k];
-        const dv=v!==null&&v!==undefined?v:'';
-        html+=`<div class="efg" style="display:flex;flex-direction:column;gap:4px">
-          <label style="font-size:11px;font-weight:500;color:var(--text2)">${f.lab}${f.pct?' (%)':''}</label>
-          <input class="ta-input target" type="number" min="0" step="${f.pct?'0.01':'1'}" id="ro_${f.k}" value="${dv}" placeholder="—" style="text-align:right"/>
-        </div>`;
-      });
-      html+=`</div>`;
-    });
-  });
-  return html;
-}
-
-async function saveROTargets(){
-  const btn=document.getElementById('btnROSave');
-  const msg=document.getElementById('roMsg');
-  btn.disabled=true; btn.textContent='Saving...'; msg.style.display='none';
-  const rows=[];
-  const now=new Date().toISOString();
-  ALL_FIELDS.forEach(f=>{
-    const el=document.getElementById('ro_'+f.k);
-    if(el&&el.value!=='')rows.push({sdo_code:'RO',quarter:'ANNUAL',field_key:f.k,field_value:parseFloat(el.value),updated_at:now});
-  });
-  try{
-    await sbUpsert('bar1_targets',rows);
-    rows.forEach(r=>setCache(TARGET_CACHE,'RO','ANNUAL',r.field_key,r.field_value));
-    msg.className='save-msg msg-ok'; msg.textContent='✓ RO Annual Targets saved to cloud!';
-  }catch(e){
-    msg.className='save-msg msg-err'; msg.textContent='✗ Save failed. Check connection.';
-  }
-  msg.style.display='block';
-  btn.disabled=false; btn.textContent='☁️ Save RO Annual Targets';
-  setTimeout(()=>msg.style.display='none',4000);
-}
-
-// ─── SDO DETAIL ──────────────────────────────
-function viewSDO(code){adminSDO=code;showSDODetail(code);}
-function showSDODetail(code){
-  const sdo=SDO_LIST.find(s=>s.code===code);
-  if(!sdo)return;
-  let html=`<div style="margin-top:1rem;font-size:15px;font-weight:600;margin-bottom:1rem">${sdo.name} — Submitted Data</div>`;
-  SECTIONS.forEach(sec=>{
-    html+=`<div class="card"><div class="card-title">${sec.label}</div><div class="tbl-wrap"><table>
-      <thead><tr><th>Indicator</th>
-      ${QUARTERS.map(q=>`<th class="th-target num">${q} Target</th><th class="th-accomplish num">${q} Acc.</th><th class="th-variance num">${q} Var.</th>`).join('')}
-      </tr></thead><tbody>`;
-    sec.groups.forEach(grp=>{
-      html+=`<tr><td colspan="${1+QUARTERS.length*3}" style="background:var(--surface2);font-size:11px;font-weight:600;color:var(--text2);padding:5px 10px">${grp.label}</td></tr>`;
-      grp.fields.forEach(f=>{
-        html+=`<tr><td>${f.lab}${f.pct?' (%)':''}</td>`;
-        QUARTERS.forEach(q=>{
-          const t=getT(code,q)[f.k]; const a=getD(code,q)[f.k];
-          const td=(t===null||t===undefined)?'—':(f.pct?Number(t).toFixed(1)+'%':Number(t).toLocaleString());
-          const ad=(a===null||a===undefined)?'—':(f.pct?Number(a).toFixed(1)+'%':Number(a).toLocaleString());
-          let vd='—',vcls='variance-cell';
-          if(t!==null&&t!==undefined&&a!==null&&a!==undefined){
-            const v=Number(a)-Number(t);
-            vd=(f.pct?v.toFixed(1)+'%':v.toLocaleString());
-            vcls='variance-cell '+(v>=0?'var-pos':'var-neg');
-          }
-          html+=`<td class="target-cell">${td}</td><td class="accomplish-cell">${ad}</td><td class="${vcls}">${vd}</td>`;
-        });
-        html+=`</tr>`;
-      });
-    });
-    html+=`</tbody></table></div></div>`;
-  });
+function viewSDO(s){
   const el=document.getElementById('sdoDetail');
-  if(el)el.innerHTML=html;
-}
-
-// ─── CONSOLIDATED ────────────────────────────
-function buildConsolidated(){
-  const kf=[
-    {k:'teachers_trained',lab:'Teachers trained'},
-    {k:'trp_trained',lab:'Teaching-related trained'},
-    {k:'ntp_trained',lab:'Non-teaching trained'},
-    {k:'total_schools_lac',lab:'Schools with LAC'},
-    {k:'classrooms_constructed',lab:'Classrooms constructed'},
-    {k:'classrooms_ongoing',lab:'Classrooms on-going'},
-    {k:'berf_approved',lab:'BERF proposals approved'},
-    {k:'sci_math_equip',lab:'Sci/Math equipment'},
-    {k:'tvl_equip',lab:'TVL equipment'},
-    {k:'ict_equip',lab:'ICT equipment'},
-    {k:'hot_meals',lab:'SBFP Hot Meals'},
-    {k:'esc_grantees',lab:'ESC grantees'},
-    {k:'nat_elem',lab:'NAT Elem Grade 6 (%)'},
-    {k:'nat_jhs',lab:'NAT JHS Grade 10 (%)'},
-    {k:'nat_shs',lab:'NAT SHS Grade 12 (%)'},
-    {k:'retention_elem',lab:'Retention Rate — Elem (%)'},
-    {k:'completion_elem',lab:'Completion Rate — Elem (%)'},
-  ];
-  let html=`<div class="card"><div class="card-title">Consolidated BAR 1 Accomplishments — All 12 SDOs · CY 2026</div>
-    <div class="tbl-wrap"><table>
-    <thead><tr><th>Indicator</th>${SDO_LIST.map(s=>`<th class="num" style="min-width:60px">${s.code}</th>`).join('')}<th class="num" style="color:var(--accent)">TOTAL</th></tr></thead><tbody>`;
-  QUARTERS.forEach(q=>{
-    html+=`<tr><td colspan="${SDO_LIST.length+2}" style="background:var(--accent);color:#fff;font-weight:600;padding:5px 10px;font-size:11px">${q} — CY 2026</td></tr>`;
-    kf.forEach(f=>{
-      let reg=0;
-      const cells=SDO_LIST.map(s=>{
-        const v=getD(s.code,q)[f.k];
-        if(v!==null&&v!==undefined)reg+=Number(v);
-        return`<td class="num">${(v===null||v===undefined)?'—':Number(v).toLocaleString()}</td>`;
-      }).join('');
-      html+=`<tr><td style="padding-left:14px">${f.lab}</td>${cells}<td class="num" style="font-weight:700;color:var(--accent)">${reg>0?reg.toLocaleString():'—'}</td></tr>`;
+  let h=`<div class="section-card"><div class="section-title">📄 ${SDONAMES[s]} — Full Data</div>
+    <div style="overflow-x:auto"><table><thead><tr>
+      <th style="min-width:280px">Indicator</th>
+      ${QS.map(q=>`<th style="text-align:center;min-width:85px;background:#b7791f">Q${q[1]} Target</th><th style="text-align:center;min-width:85px;background:#276749">Q${q[1]} Accom.</th>`).join('')}
+    </tr></thead><tbody>`;
+  PROGRAMS.forEach(p=>{
+    h+=`<tr class="prog-hdr"><td colspan="${1+QS.length*2}">${p.name}</td></tr>`;
+    p.ind.forEach(i=>{
+      h+=`<tr><td>${i.l}</td>`;
+      QS.forEach(q=>{
+        const t=aTgt[s]?.[q]?.[i.k],a=aData[s]?.[q]?.[i.k];
+        h+=`<td style="text-align:center">${t!==undefined?t:'—'}</td><td style="text-align:center;font-weight:600">${a!==undefined?a:'—'}</td>`;
+      });
+      h+='</tr>';
     });
   });
-  html+=`</tbody></table></div></div>`;
-  return html;
+  h+='</tbody></table></div></div>';
+  el.innerHTML=h;el.scrollIntoView({behavior:'smooth'});
 }
 
-// ─── ALL PDFS ────────────────────────────────
-function buildAllPDFs(){
-  let html='<div class="alert alert-info">All BAR 1 PDF files uploaded by the 12 SDOs.</div>';
-  SDO_LIST.forEach(s=>{
-    const allUploads=QUARTERS.flatMap(q=>getU(s.code,q).map(u=>({...u,q})));
-    if(allUploads.length===0)return;
-    html+=`<div class="card"><div class="card-title">${s.name}</div><div class="upload-list">`;
-    allUploads.forEach(u=>{
-      html+=`<div class="upload-item">
-        <div><a href="${u.file_path}" target="_blank">📄 ${u.file_name}</a>
-        <div class="upload-time">${u.q} &nbsp;·&nbsp; Uploaded: ${new Date(u.uploaded_at).toLocaleString()}</div></div>
-      </div>`;
+// ===== ADMIN: CONSOLIDATED TABLE =====
+function rAdmCon(){
+  const el=document.getElementById('tab-admin-consolidated');
+  let h=`<div class="section-card">
+    <div class="section-title">📑 Consolidated Table — All Indicators, All 12 SDOs</div>
+    <div class="qtabs">${QS.map(q=>`<button class="qtab ${q===conQ?'active':''}" onclick="conQ='${q}';rAdmCon()">${q} 2026</button>`).join('')}</div>
+    <div style="overflow-x:auto"><table><thead>
+      <tr>
+        <th style="min-width:280px;position:sticky;left:0;z-index:2">Indicator</th>
+        <th style="text-align:center;min-width:90px;background:#744210">RO Target</th>
+        ${SDOS.map(s=>`<th style="text-align:center;min-width:80px;font-size:11px">${SDONAMES[s]}</th>`).join('')}
+        <th style="text-align:center;min-width:90px;background:#1a365d">TOTAL / AVG</th>
+      </tr>
+    </thead><tbody>`;
+
+  PROGRAMS.forEach(p=>{
+    h+=`<tr class="prog-hdr"><td colspan="${3+SDOS.length}" style="background:${p.color};color:white">${p.name}</td></tr>`;
+    p.ind.forEach(i=>{
+      const isPct=i.u==='%';
+      const roT=roTgt[conQ]?.[i.k];
+      h+=`<tr>
+        <td style="position:sticky;left:0;background:white;z-index:1">${i.l}</td>
+        <td style="text-align:center;color:#744210;font-weight:600;font-size:12px">${roT!==undefined?roT+(i.u||''):'—'}</td>`;
+      let total=0,count=0;
+      SDOS.forEach(s=>{
+        const t=aTgt[s]?.[conQ]?.[i.k],a=aData[s]?.[conQ]?.[i.k];
+        if(a!==undefined&&a!==null){total+=parseFloat(a);count++}
+        const cell=a!==undefined?`<strong>${a}</strong>${t!==undefined?`<br><span style="font-size:10px;color:#a0aec0">t:${t}</span>`:''}` :'—';
+        h+=`<td style="text-align:center;font-size:12px">${cell}</td>`;
+      });
+      const totDisp=count===0?'—':(isPct?(total/count).toFixed(2)+'%':total.toLocaleString());
+      let varHtml='';
+      if(count>0&&roT!==undefined){const rv=isPct?total/count:total;const d=rv-roT;varHtml=`<br><span class="${d>=0?'vm':'vx'}" style="font-size:10px">${d>=0?'+':''}${d.toFixed(1)}</span>`}
+      h+=`<td style="text-align:center;font-weight:700;background:#ebf8ff;font-size:12px">${totDisp}${varHtml}</td></tr>`;
     });
-    html+=`</div></div>`;
   });
-  if(html.indexOf('<div class="card">')===-1)
-    html+='<div class="alert alert-warn">No PDF files uploaded yet by any SDO.</div>';
-  return html;
+
+  h+='</tbody></table></div></div>';
+  el.innerHTML=h;
 }
 
-// ─── EDIT SDO DATA ───────────────────────────
-function loadEdit(){
-  const sdo=document.getElementById('eSdo')?.value;
-  const q=document.getElementById('eQ')?.value;
-  if(!sdo||!q)return;
-  const sdoObj=SDO_LIST.find(s=>s.code===sdo);
-  document.getElementById('editForm').innerHTML=`
-    <div class="card" style="margin-top:1rem">
-      <div class="card-title">Editing: ${sdoObj.name} — ${q} CY 2026</div>
-      <div class="legend-row">
-        <span><span class="ldot" style="background:#fffbf0;border:1px solid #e8d5a0"></span>Target</span>
-        <span><span class="ldot" style="background:#f0f9f5;border:1px solid #a8d5c0"></span>Accomplishment</span>
-      </div>
-      ${buildFormHTML(sdo,q,'edit_',false)}
-      <button class="btn-save" id="btnEdit" onclick="doAdminSave()">☁️ Save Changes — ${sdoObj.name} ${q}</button>
-      <div class="save-msg" id="eSaveMsg"></div>
-    </div>`;
+// ===== ADMIN: EDIT SDO DATA =====
+function rAdmEdit(){
+  const el=document.getElementById('tab-admin-edit');
+  const tbl=buildFullIndTable(
+    k=>aTgt[editS]?.[editQ]?.[k],
+    k=>aData[editS]?.[editQ]?.[k],
+    true,'ete_','eae_'
+  );
+  el.innerHTML=`<div class="section-card">
+    <div class="section-title">✏️ Edit SDO Data</div>
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <div><label style="font-size:11px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">SDO</label>
+        <select id="edS" onchange="editS=this.value;rAdmEdit()">${SDOS.map(s=>`<option value="${s}"${s===editS?' selected':''}>${SDONAMES[s]}</option>`).join('')}</select></div>
+      <div><label style="font-size:11px;font-weight:700;color:#4a5568;display:block;margin-bottom:4px">QUARTER</label>
+        <select id="edQ" onchange="editQ=this.value;rAdmEdit()">${QS.map(q=>`<option value="${q}"${q===editQ?' selected':''}>${q} 2026</option>`).join('')}</select></div>
+    </div>
+    <div id="edMsg"></div>
+    ${tbl}
+    <div style="margin-top:14px"><button class="btn btn-s" onclick="saveEdit()">☁️ Save Changes — ${SDONAMES[editS]} ${editQ}</button></div>
+  </div>`;
+  attachLiveVar('ete_','eae_');
 }
+async function saveEdit(){await saveRows(editS,editQ,'ete_','eae_','edMsg')}
 
-async function doAdminSave(){
-  const sdo=document.getElementById('eSdo').value;
-  const q=document.getElementById('eQ').value;
-  const btn=document.getElementById('btnEdit');
-  const msg=document.getElementById('eSaveMsg');
-  btn.disabled=true; btn.textContent='Saving...';
-  const accRows=[],tgtRows=[];
-  const now=new Date().toISOString();
-  ALL_FIELDS.forEach(f=>{
-    const ta=document.getElementById('edit_t_'+f.k);
-    const aa=document.getElementById('edit_a_'+f.k);
-    if(ta&&ta.value!=='')tgtRows.push({sdo_code:sdo,quarter:q,field_key:f.k,field_value:parseFloat(ta.value),updated_at:now});
-    if(aa&&aa.value!=='')accRows.push({sdo_code:sdo,quarter:q,field_key:f.k,field_value:parseFloat(aa.value),updated_at:now});
+// ===== ADMIN: RO TARGETS =====
+function rAdmROT(){
+  const el=document.getElementById('tab-admin-rotargets');
+  el.innerHTML=`<div class="section-card">
+    <div class="section-title">🎯 Regional Office Annual Targets — CY 2026</div>
+    <div class="alert al-i" style="font-size:12px;margin-bottom:14px">Set RO-level targets per quarter. Used as benchmarks in the dashboard and consolidated table.</div>
+    <div class="qtabs" id="roQtabs">${QS.map((q,i)=>`<button class="qtab ${i===0?'active':''}" onclick="roQ='${q}';document.querySelectorAll('#roQtabs .qtab').forEach(b=>b.classList.remove('active'));this.classList.add('active');rROForm()">${q}</button>`).join('')}</div>
+    <div id="roForm"></div>
+  </div>`;
+  rROForm();
+}
+function rROForm(){
+  const el=document.getElementById('roForm');
+  let h=`<div id="roMsg"></div><div style="overflow-x:auto"><table class="ind-table">
+    <thead><tr><th style="min-width:300px">Indicator</th><th style="text-align:center;min-width:110px;background:#b7791f">RO Target — ${roQ}</th></tr></thead><tbody>`;
+  PROGRAMS.forEach(p=>{
+    h+=`<tr class="prog-row"><td colspan="2" style="background:${p.color}">${p.name}</td></tr>`;
+    p.ind.forEach(i=>{
+      const v=roTgt[roQ]?.[i.k]??'';
+      h+=`<tr><td>${i.l}</td><td style="text-align:center"><input class="num-input t-input" type="number" step="any" id="ro_${i.k}" value="${v}" placeholder="—"></td></tr>`;
+    });
   });
+  h+=`</tbody></table></div><div style="margin-top:14px"><button class="btn btn-s" onclick="saveROT()">☁️ Save ${roQ} RO Targets</button></div>`;
+  el.innerHTML=h;
+}
+async function saveROT(){
+  const msg=document.getElementById('roMsg');
+  msg.innerHTML='<div class="alert al-i">Saving...</div>';
+  const rows=[];
+  PROGRAMS.forEach(p=>p.ind.forEach(i=>{
+    const v=document.getElementById(`ro_${i.k}`)?.value;
+    if(v!==undefined&&v!=='')rows.push({sdo_code:'RO',quarter:roQ,field_key:i.k,field_value:parseFloat(v)});
+  }));
   try{
-    if(tgtRows.length)await sbUpsert('bar1_targets',tgtRows);
-    if(accRows.length)await sbUpsert('bar1_data',accRows);
-    tgtRows.forEach(r=>setCache(TARGET_CACHE,sdo,q,r.field_key,r.field_value));
-    accRows.forEach(r=>setCache(DATA_CACHE,sdo,q,r.field_key,r.field_value));
-    msg.className='save-msg msg-ok'; msg.textContent='✓ Changes saved to cloud!';
-  }catch(e){
-    msg.className='save-msg msg-err'; msg.textContent='✗ Save failed.';
+    if(rows.length)await dbUpsert('bar1_targets',rows);
+    msg.innerHTML='<div class="alert al-s">✅ RO Targets saved!</div>';
+    await loadAll();setTimeout(()=>msg.innerHTML='',3000);
+  }catch{msg.innerHTML='<div class="alert al-d">❌ Error saving.</div>'}
+}
+
+// ===== ADMIN: PDFs =====
+function rAdmPDFs(){
+  const el=document.getElementById('tab-admin-pdfs');
+  if(!uploads.length){el.innerHTML='<div class="section-card"><div class="alert al-i">No PDF files have been uploaded yet.</div></div>';return}
+  let h='<div class="section-card"><div class="section-title">📎 All Uploaded BAR 1 PDFs</div>';
+  QS.forEach(q=>{
+    const qu=uploads.filter(u=>u.quarter===q);
+    if(!qu.length)return;
+    h+=`<div style="margin-bottom:18px"><div style="font-weight:700;font-size:13px;margin-bottom:10px;padding:8px 12px;background:#ebf8ff;border-radius:8px;color:#2c5282">${q} 2026 — ${qu.length} file(s)</div>`;
+    qu.forEach(u=>{
+      h+=`<div class="upload-item"><span><strong>${SDONAMES[u.sdo_code]||u.sdo_code}</strong> — 📄 ${u.file_name}</span>
+        <a href="${SB}/storage/v1/object/public/bar1-uploads/${u.file_path}" target="_blank" class="btn btn-p" style="padding:4px 10px;font-size:12px">View PDF</a></div>`;
+    });
+    h+='</div>';
+  });
+  h+='</div>';el.innerHTML=h;
+}
+
+// ===== ADMIN: PDF CONTROL =====
+function rAdmPDFCtrl(){
+  const el=document.getElementById('tab-admin-pdfctrl');
+  let h=`<div class="section-card">
+    <div class="section-title">⚙️ PDF Upload Control</div>
+    <div class="alert al-i" style="font-size:13px;margin-bottom:14px">
+      Enable or disable PDF uploads per quarter. When a quarter is <strong>disabled</strong>, SDOs see a message that the window is closed. When <strong>enabled</strong>, SDOs can upload their approved BAR 1 PDF.
+    </div>
+    <div id="pdfCtrlMsg"></div>`;
+  QS.forEach(q=>{
+    const en=pdfCtrl[q];
+    h+=`<div class="toggle-wrap">
+      <label class="toggle"><input type="checkbox" id="tgl_${q}" ${en?'checked':''} onchange="setPDFCtrl('${q}',this.checked)"><span class="slider"></span></label>
+      <span style="font-size:14px;font-weight:600;flex:1">${q} 2026 — PDF Upload Window</span>
+      <span class="badge ${en?'bg':'br'}" id="tglBadge_${q}">${en?'ENABLED':'DISABLED'}</span>
+    </div>`;
+  });
+  h+='</div>';el.innerHTML=h;
+}
+async function setPDFCtrl(q,en){
+  const badge=document.getElementById(`tglBadge_${q}`);
+  badge.textContent=en?'ENABLED':'DISABLED';
+  badge.className=`badge ${en?'bg':'br'}`;
+  try{
+    await dbUpsert('bar1_data',[{sdo_code:'SETTINGS',quarter:'global',field_key:`pdf_upload_${q}`,field_value:en?1:0}]);
+    pdfCtrl[q]=en;
+    const msg=document.getElementById('pdfCtrlMsg');
+    msg.innerHTML=`<div class="alert al-s">✅ ${q} PDF upload ${en?'enabled':'disabled'}.</div>`;
+    setTimeout(()=>msg.innerHTML='',3000);
+  }catch{
+    const msg=document.getElementById('pdfCtrlMsg');
+    msg.innerHTML='<div class="alert al-d">❌ Error saving setting.</div>';
   }
-  msg.style.display='block';
-  const sdoObj=SDO_LIST.find(s=>s.code===sdo);
-  btn.disabled=false; btn.textContent=`☁️ Save Changes — ${sdoObj.name} ${q}`;
-  setTimeout(()=>msg.style.display='none',4000);
 }
 </script>
 </body>
