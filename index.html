@@ -394,6 +394,7 @@ function buildNav(){
       <div class="nav-section">Help</div>
       <div class="nav-item" onclick="loadPage('user_guide')">📖 User Guide</div>
     `;
+  } else {
     nav.innerHTML=`
       <div class="nav-section">My Data</div>
       <div class="nav-item" onclick="loadPage('encode')">✏️ Encode Data</div>
@@ -1069,21 +1070,16 @@ async function renderEncode(){
       h+=`</div>`;
     });
     
-    // Show Save button if encoding is open OR if any correction is approved for this quarter
-    const hasApprovedCorrection=ALL_INDICATORS.some(ind=>{
-      const corrKey=`${currentUser.username}_${q}_${ind.key}`;
-      return correctionRequests[corrKey]?.status==='approved';
+    // Show Save button when encoding is open OR when SDO has at least one approved correction
+    const hasApproved=ALL_INDICATORS.some(ind=>{
+      const ck=`${currentUser.username}_${q}_${ind.key}`;
+      return correctionRequests[ck]?.status==='approved';
     });
-    if(isOpen || hasApprovedCorrection){
-      h+=`<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-primary" onclick="saveEncodeData('${q}')">☁️ Save ${q} Data to Cloud</button>
-        <button class="btn btn-warn" onclick="requestAllCorrections('${q}')" title="Request admin to allow corrections for indicators in this quarter">🔁 Request Correction for this Quarter</button>
-      </div>`;
-    } else {
-      // Encoding is closed: still show a request correction button for the whole quarter
-      h+=`<div style="margin-top:16px">
-        <button class="btn btn-warn" onclick="requestAllCorrections('${q}')" title="Request admin to allow corrections for this quarter">🔁 Request Correction for ${q}</button>
-      </div>`;
+    if(isOpen||hasApproved){
+      h+=`<div style="margin-top:16px"><button class="btn btn-primary" onclick="saveEncodeData('${q}')">☁️ Save ${q} Data to Cloud</button></div>`;
+    }
+    if(!isOpen){
+      h+=`<div style="margin-top:12px"><button class="btn btn-warn" onclick="requestQuarterCorrection('${q}')">🔁 Request Correction for ${q}</button></div>`;
     }
     return h;
   }
@@ -1154,32 +1150,6 @@ async function saveEncodeData(q){
   }
 }
 
-async function requestAllCorrections(q){
-  const allowed=ALL_INDICATORS.filter(ind=>sdoAllowedQuarters(ind).includes(q));
-  if(!allowed.length){alert('No indicators are assigned to this quarter yet.');return;}
-  let count=0;
-  for(const ind of allowed){
-    const corrKey=`${currentUser.username}_${q}_${ind.key}`;
-    if(!correctionRequests[corrKey]){
-      await fetch(`${SUPABASE_URL}/rest/v1/bar1_correction_requests`,{
-        method:'POST',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-        body:JSON.stringify({sdo_code:currentUser.username, quarter:q, field_key:ind.key, status:'pending'})
-      });
-      count++;
-    }
-  }
-  await loadCorrectionRequests(currentUser.username);
-  const activeTab=document.querySelector('.q-tab.active');
-  if(activeTab) window.switchEncodeQ(activeTab.textContent.trim());
-  if(count>0){
-    const msg=document.getElementById('encMsg');
-    if(msg){msg.textContent=`✓ Correction request submitted for ${count} indicator(s) in ${q}. Pending admin approval.`;msg.className='msg msg-success';msg.style.display='block';setTimeout(()=>msg.style.display='none',5000);}
-  } else {
-    alert('Correction requests for all indicators in this quarter have already been submitted.');
-  }
-}
-
 async function requestCorrection(q, fieldKey){
   const corrKey=`${currentUser.username}_${q}_${fieldKey}`;
   if(correctionRequests[corrKey]) return;
@@ -1191,6 +1161,33 @@ async function requestCorrection(q, fieldKey){
   await loadCorrectionRequests(currentUser.username);
   const activeTab=document.querySelector('.q-tab.active');
   if(activeTab) window.switchEncodeQ(activeTab.textContent.trim());
+}
+
+async function requestQuarterCorrection(q){
+  const allowed=ALL_INDICATORS.filter(ind=>sdoAllowedQuarters(ind).includes(q));
+  if(!allowed.length){alert('No indicators are assigned to this quarter yet.');return;}
+  let submitted=0;
+  for(const ind of allowed){
+    const corrKey=`${currentUser.username}_${q}_${ind.key}`;
+    if(!correctionRequests[corrKey]){
+      await fetch(`${SUPABASE_URL}/rest/v1/bar1_correction_requests`,{
+        method:'POST',
+        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify({sdo_code:currentUser.username,quarter:q,field_key:ind.key,status:'pending'})
+      });
+      submitted++;
+    }
+  }
+  await loadCorrectionRequests(currentUser.username);
+  const activeTab=document.querySelector('.q-tab.active');
+  if(activeTab) window.switchEncodeQ(activeTab.textContent.trim());
+  const msg=document.getElementById('encMsg');
+  if(msg){
+    msg.textContent=submitted>0?`✓ Correction request submitted for ${submitted} indicator(s) in ${q}. Awaiting admin approval.`:`All indicators in ${q} already have pending or approved requests.`;
+    msg.className='msg msg-'+(submitted>0?'success':'info');
+    msg.style.display='block';
+    setTimeout(()=>msg.style.display='none',5000);
+  }
 }
 
 // ============================================================
@@ -1541,9 +1538,8 @@ async function renderSubmissions(){
   
   window.viewSDO=async function(sdo){
     const detail=document.getElementById('sdoDetail');
-    detail.innerHTML=`<div class="loading">Loading ${ACCOUNTS[sdo]?.name} data…</div>`;
+    detail.innerHTML=`<div class="loading">Loading ${ACCOUNTS[sdo]?.name||sdo} data…</div>`;
     detail.scrollIntoView({behavior:'smooth'});
-
     const [d, t]=await Promise.all([
       sbGet('bar1_data',`?sdo_code=eq.${sdo}`),
       sbGet('bar1_targets',`?sdo_code=eq.${sdo}`)
@@ -1553,59 +1549,57 @@ async function renderSubmissions(){
     
     let h=`<div class="card">
       <h3 style="display:flex;align-items:center;justify-content:space-between">
-        <span>✏️ ${ACCOUNTS[sdo]?.name} — Edit / Revise Data</span>
-        <button class="btn btn-success" onclick="saveAdminSDOEdit('${sdo}')">💾 Save Changes</button>
+        <span>✏️ ${ACCOUNTS[sdo]?.name||sdo} — Edit / Revise Data</span>
+        <button class="btn btn-success" onclick="saveAdminEdit('${sdo}')">💾 Save Changes</button>
       </h3>
       <div class="msg" id="adminEditMsg"></div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Admin can directly revise or clean any indicator value for this SDO. Leave blank to clear a value.</p>`;
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Admin may revise or clean any value. Leave a field blank to skip updating it.</p>`;
 
-    ['Q1','Q2','Q3','Q4'].forEach(q=>{
+    const quarters=['Q1','Q2','Q3','Q4'];
+    quarters.forEach(q=>{
       const hasQ=ALL_INDICATORS.some(i=>dm[`${q}_${i.key}`]!==undefined||tm[`${q}_${i.key}`]!==undefined);
       if(!hasQ) return;
       h+=`<h4 style="margin:14px 0 8px;padding:8px 12px;background:#e8f0fb;border-radius:6px;color:var(--primary)">${q}</h4>
       <table><thead><tr><th style="min-width:260px">Indicator</th><th>SDO Target</th><th>Accomplishment</th></tr></thead><tbody>`;
       ALL_INDICATORS.forEach(ind=>{
-        const tv=tm[`${q}_${ind.key}`];const av=dm[`${q}_${ind.key}`];
+        const tv=tm[`${q}_${ind.key}`]; const av=dm[`${q}_${ind.key}`];
         if(tv===undefined&&av===undefined) return;
         h+=`<tr>
           <td style="font-size:12px">${ind.label}</td>
-          <td><input type="number" id="adm_tgt_${sdo}_${q}_${ind.key}" value="${tv??''}" min="0" placeholder="—" style="width:100px;padding:4px 8px;border:1.5px solid var(--border);border-radius:5px;font-size:12px"></td>
-          <td><input type="number" id="adm_acc_${sdo}_${q}_${ind.key}" value="${av??''}" min="0" placeholder="—" style="width:100px;padding:4px 8px;border:1.5px solid var(--border);border-radius:5px;font-size:12px"></td>
+          <td><input type="number" id="ae_t_${sdo}_${q}_${ind.key}" value="${tv??''}" min="0" placeholder="—" style="width:100px;padding:4px 8px;border:1.5px solid var(--border);border-radius:5px;font-size:12px"></td>
+          <td><input type="number" id="ae_a_${sdo}_${q}_${ind.key}" value="${av??''}" min="0" placeholder="—" style="width:100px;padding:4px 8px;border:1.5px solid var(--border);border-radius:5px;font-size:12px"></td>
         </tr>`;
       });
       h+=`</tbody></table>`;
     });
-
-    if(!['Q1','Q2','Q3','Q4'].some(q=>ALL_INDICATORS.some(i=>dm[`${q}_${i.key}`]!==undefined||tm[`${q}_${i.key}`]!==undefined))){
+    if(!quarters.some(q=>ALL_INDICATORS.some(i=>dm[`${q}_${i.key}`]!==undefined||tm[`${q}_${i.key}`]!==undefined))){
       h+=`<div class="empty">This SDO has not submitted any data yet.</div>`;
     }
-    h+=`<div style="margin-top:16px"><button class="btn btn-success" onclick="saveAdminSDOEdit('${sdo}')">💾 Save Changes</button></div></div>`;
+    h+=`<div style="margin-top:16px"><button class="btn btn-success" onclick="saveAdminEdit('${sdo}')">💾 Save Changes</button></div></div>`;
     detail.innerHTML=h;
     detail.scrollIntoView({behavior:'smooth'});
-
-    // store current maps for save
-    window._adminEditDm=dm; window._adminEditTm=tm;
   };
 
-  window.saveAdminSDOEdit=async function(sdo){
+  window.saveAdminEdit=async function(sdo){
     const msg=document.getElementById('adminEditMsg');
-    if(msg){msg.textContent='Saving…';msg.className='msg msg-info';msg.style.display='block';}
+    msg.textContent='Saving…'; msg.className='msg msg-info'; msg.style.display='block';
     const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
-    const dataRows=[],targetRows=[];
+    const dRows=[],tRows=[];
     ['Q1','Q2','Q3','Q4'].forEach(q=>{
       ALL_INDICATORS.forEach(ind=>{
-        const tEl=document.getElementById(`adm_tgt_${sdo}_${q}_${ind.key}`);
-        const aEl=document.getElementById(`adm_acc_${sdo}_${q}_${ind.key}`);
-        if(tEl&&tEl.value!=='') targetRows.push({sdo_code:sdo,quarter:q,field_key:ind.key,field_value:parseFloat(tEl.value)||0});
-        if(aEl&&aEl.value!=='') dataRows.push({sdo_code:sdo,quarter:q,field_key:ind.key,field_value:parseFloat(aEl.value)||0});
+        const tEl=document.getElementById(`ae_t_${sdo}_${q}_${ind.key}`);
+        const aEl=document.getElementById(`ae_a_${sdo}_${q}_${ind.key}`);
+        if(tEl&&tEl.value!=='') tRows.push({sdo_code:sdo,quarter:q,field_key:ind.key,field_value:parseFloat(tEl.value)||0});
+        if(aEl&&aEl.value!=='') dRows.push({sdo_code:sdo,quarter:q,field_key:ind.key,field_value:parseFloat(aEl.value)||0});
       });
     });
     try{
-      if(dataRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data`,{method:'POST',headers,body:JSON.stringify(dataRows)});
-      if(targetRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets`,{method:'POST',headers,body:JSON.stringify(targetRows)});
-      if(msg){msg.textContent='✓ Changes saved successfully!';msg.className='msg msg-success';setTimeout(()=>msg.style.display='none',4000);}
+      if(tRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets`,{method:'POST',headers,body:JSON.stringify(tRows)});
+      if(dRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data`,{method:'POST',headers,body:JSON.stringify(dRows)});
+      msg.textContent='✓ Changes saved successfully!'; msg.className='msg msg-success';
+      setTimeout(()=>msg.style.display='none',4000);
     }catch(e){
-      if(msg){msg.textContent='❌ Error: '+e.message;msg.className='msg msg-error';}
+      msg.textContent='❌ Error: '+e.message; msg.className='msg msg-error';
     }
   };
 }
@@ -1653,37 +1647,33 @@ function renderUserGuide(){
   const mc=document.getElementById('mainContent');
   const isAdmin=currentUser.role==='admin';
   mc.innerHTML=`<div class="page-title">📖 User Guide</div>
-  <div class="page-sub">BAR 1 Portal 2026 — Help & Navigation Guide</div>
-
+  <div class="page-sub">BAR 1 Portal 2026 — Help & Navigation</div>
   ${isAdmin?`
-  <div class="card"><h3>👤 Administrator Account Guide</h3>
-  <div style="line-height:1.8;font-size:13px">
-    <p style="margin-bottom:10px"><strong>📊 Dashboard</strong> — View all programs and indicators with bar/pie charts comparing RO targets vs. consolidated SDO accomplishments. Filter by quarter using the tabs.</p>
-    <p style="margin-bottom:10px"><strong>📋 Consolidated Table</strong> — See a full matrix of all SDOs' accomplishments per indicator per quarter. Use the Q1/Q2/Q3/Q4 tabs to filter. Values shown are cumulative (summed or averaged up to the reporting quarter).</p>
-    <p style="margin-bottom:10px"><strong>📁 SDO Submissions</strong> — Click any SDO card to view and <em>directly edit/revise</em> their submitted data. Edit any Target or Accomplishment value and click <em>Save Changes</em>.</p>
-    <p style="margin-bottom:10px"><strong>💬 Consolidated Remarks</strong> — View all remarks submitted by SDOs per indicator per quarter.</p>
-    <p style="margin-bottom:10px"><strong>🎯 RO Annual Targets</strong> — Set the Regional Office target for each indicator and assign each indicator to a reporting quarter (Q1–Q4). Click <em>Save All Targets & Assignments</em> when done.</p>
-    <p style="margin-bottom:10px"><strong>🔒 Encoding Control</strong> — Toggle encoding ON/OFF per quarter. When OPEN, SDOs can encode data. When CLOSED, SDOs can only view their previously saved data.</p>
-    <p style="margin-bottom:10px"><strong>📄 PDF Upload Control</strong> — Toggle PDF uploads ON/OFF per quarter.</p>
-    <p style="margin-bottom:10px"><strong>✏️ Correction Requests</strong> — Review SDO correction requests. Click <em>Approve</em> to allow an SDO to re-encode a specific indicator, or <em>Deny</em> to reject.</p>
+  <div class="card"><h3>Administrator Guide</h3>
+  <div style="font-size:13px;line-height:1.9">
+    <p><strong>📊 Dashboard</strong> — View all programs and indicators as bar/pie charts. Filter by quarter using the tabs at the top.</p>
+    <p><strong>📋 Consolidated Table</strong> — Full matrix of all 12 SDOs vs all indicators per quarter. Cumulative values are applied automatically.</p>
+    <p><strong>📁 SDO Submissions</strong> — Click any SDO card to <strong>view and directly edit</strong> their submitted data. Change any Target or Accomplishment and click <em>Save Changes</em>.</p>
+    <p><strong>💬 Consolidated Remarks</strong> — Read all SDO remarks per indicator per quarter.</p>
+    <p><strong>🎯 RO Annual Targets</strong> — Set the RO target for each indicator and assign it to a reporting quarter. Click <em>Save All Targets & Assignments</em>.</p>
+    <p><strong>🔒 Encoding Control</strong> — Toggle encoding OPEN/CLOSED per quarter. SDOs can only encode when you set their quarter to OPEN.</p>
+    <p><strong>📄 PDF Upload Control</strong> — Toggle PDF uploads OPEN/CLOSED per quarter.</p>
+    <p><strong>✏️ Correction Requests</strong> — Approve or Deny SDO requests to re-encode data after a quarter is closed.</p>
   </div></div>`:`
-  <div class="card"><h3>👤 SDO Account Guide</h3>
-  <div style="line-height:1.8;font-size:13px">
-    <p style="margin-bottom:10px"><strong>✏️ Encode Data</strong> — Enter your SDO's targets and accomplishments per indicator. Select the quarter tab (Q1–Q4). You can only encode when encoding is OPEN (set by the Administrator). For each indicator, enter the SDO Target and Accomplishment, and optionally add remarks.</p>
-    <p style="margin-bottom:10px"><strong>☁️ Save Data to Cloud</strong> — After entering data, click this button at the bottom of the encoding page to save. This button appears when encoding is open OR when you have an approved correction request.</p>
-    <p style="margin-bottom:10px"><strong>🔁 Request Correction</strong> — When encoding is CLOSED, click this button to ask the Administrator to re-open encoding for corrections. Individual indicator-level requests can also be made per indicator row. Await admin approval before re-encoding.</p>
-    <p style="margin-bottom:10px"><strong>🎯 SDO Targets</strong> — Set your division-level targets per indicator per quarter. This is separate from the RO Annual Targets set by the Administrator.</p>
-    <p style="margin-bottom:10px"><strong>📊 My Summary</strong> — View your SDO's performance across all indicators and quarters. Compare your accomplishments against both your SDO targets and the RO targets.</p>
-    <p style="margin-bottom:10px"><strong>🌐 Regional Totals</strong> — View the consolidated regional accomplishments vs. RO targets for all indicators. Individual SDO data is not shown here.</p>
-    <p style="margin-bottom:10px"><strong>📄 Upload PDF</strong> — Upload your BAR 1 PDF report per quarter when PDF uploading is enabled by the Administrator.</p>
+  <div class="card"><h3>SDO Account Guide</h3>
+  <div style="font-size:13px;line-height:1.9">
+    <p><strong>✏️ Encode Data</strong> — Enter your accomplishments per indicator per quarter. Only indicators assigned by Admin to that quarter are editable. Click <strong>☁️ Save Data to Cloud</strong> at the bottom to save.</p>
+    <p><strong>🎯 SDO Targets</strong> — Set your division-level targets per indicator. Follow the quarter assignments set by Admin. Targets here are your own planning targets.</p>
+    <p><strong>📊 My Summary</strong> — View your encoded data across all indicators and quarters, with comparison against RO targets and your SDO targets.</p>
+    <p><strong>🌐 Regional Totals</strong> — View the consolidated regional accomplishments vs RO targets. Individual SDO figures are not shown.</p>
+    <p><strong>📄 Upload PDF</strong> — Upload your approved BAR 1 PDF per quarter when Admin has enabled uploads.</p>
+    <p><strong>🔁 Request Correction</strong> — When a quarter is closed, use this button to ask Admin to re-open encoding. Admin must approve before you can re-encode.</p>
   </div></div>`}
-
-  <div class="card"><h3>ℹ️ General Notes</h3>
-  <div style="line-height:1.8;font-size:13px">
-    <p style="margin-bottom:8px">• <strong>Cumulative Reporting:</strong> If an indicator is assigned to Q3, SDOs may encode data in Q1, Q2, and Q3. The consolidated total in the RO dashboard will be the sum (for counts) or average (for percentages) of all quarters up to Q3.</p>
-    <p style="margin-bottom:8px">• <strong>Percentage indicators</strong> are averaged across SDOs/quarters. <strong>Number indicators</strong> are summed.</p>
-    <p style="margin-bottom:8px">• Data is saved directly to the cloud (Supabase). Always click Save after encoding.</p>
-    <p style="margin-bottom:8px">• For technical issues, contact the Regional Office ICT coordinator.</p>
+  <div class="card"><h3>ℹ️ Notes</h3>
+  <div style="font-size:13px;line-height:1.9">
+    <p>• Cumulative reporting: if an indicator is assigned to Q3, SDOs may encode in Q1, Q2, and/or Q3. The system sums (counts) or averages (percentages) all quarter entries for the RO consolidated total.</p>
+    <p>• Always click Save after encoding — data is not auto-saved.</p>
+    <p>• For issues, contact the Regional Office ICT coordinator.</p>
   </div></div>`;
 }
 
@@ -1693,53 +1683,49 @@ function renderUserGuide(){
 async function renderSDOTargets(){
   const mc=document.getElementById('mainContent');
   mc.innerHTML=`<div class="page-title">🎯 SDO Targets</div><div class="loading">Loading…</div>`;
-  await Promise.all([loadQuarterAssignments(), loadEncodingControl()]);
-  const [myTargets, roTargets]=await Promise.all([
+  await Promise.all([loadQuarterAssignments(),loadEncodingControl()]);
+  const [myT,roT]=await Promise.all([
     sbGet('bar1_targets',`?sdo_code=eq.${currentUser.username}`),
     sbGet('bar1_targets','?sdo_code=eq.RO')
   ]);
-  const tm={};(myTargets||[]).forEach(r=>{tm[`${r.quarter}_${r.field_key}`]=r.field_value;});
-  const roMap={};(roTargets||[]).forEach(r=>{roMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
+  const tm={};(myT||[]).forEach(r=>{tm[`${r.quarter}_${r.field_key}`]=r.field_value;});
+  const roMap={};(roT||[]).forEach(r=>{roMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
+  window._sdoTgtTm=tm; window._sdoTgtRo=roMap;
 
   let html=`<div class="page-title">🎯 SDO Targets</div>
-  <div class="page-sub">${currentUser.name} — Set your division targets per indicator per quarter. These are used to track your SDO's performance against its own targets.</div>
+  <div class="page-sub">${currentUser.name} — Set your division-level targets per indicator. Follow the quarter assignments set by the Administrator.</div>
   <div class="msg msg-success" id="sdoTgtMsg"></div>
   <div class="q-tabs">
-    ${['Q1','Q2','Q3','Q4'].map(q=>`<button class="q-tab ${q==='Q1'?'active':''}" id="stab_${q}" onclick="switchSDOTargetQ('${q}')">${q}</button>`).join('')}
+    ${['Q1','Q2','Q3','Q4'].map((q,i)=>`<button class="q-tab ${i===0?'active':''}" id="stt_${q}" onclick="switchSDOTgt('${q}')">${q}</button>`).join('')}
   </div>
-  <div id="sdoTargetBody"></div>`;
-
+  <div id="sdoTgtBody"></div>`;
   mc.innerHTML=html;
-
-  window._sdoTgtMap=tm; window._sdoRoMap=roMap;
-
-  renderSDOTargetBody('Q1');
-
-  window.switchSDOTargetQ=function(q){
+  renderSDOTgtBody('Q1');
+  window.switchSDOTgt=function(q){
     document.querySelectorAll('.q-tab').forEach(t=>t.classList.remove('active'));
-    const tab=document.getElementById(`stab_${q}`);
+    const tab=document.getElementById(`stt_${q}`);
     if(tab) tab.classList.add('active');
-    renderSDOTargetBody(q);
+    renderSDOTgtBody(q);
   };
 }
 
-function renderSDOTargetBody(q){
-  const container=document.getElementById('sdoTargetBody');
+function renderSDOTgtBody(q){
+  const container=document.getElementById('sdoTgtBody');
   if(!container) return;
-  const tm=window._sdoTgtMap||{};
-  const roMap=window._sdoRoMap||{};
+  const tm=window._sdoTgtTm||{};
+  const roMap=window._sdoTgtRo||{};
   const isOpen=encodingControl[q]||false;
-
-  let html=`<div class="msg ${isOpen?'msg-success':'msg-info'}" style="display:block;margin-bottom:14px">${isOpen?'✅ Encoding is <strong>OPEN</strong> for '+q+'. You may set/update your targets.':'🔒 Encoding for <strong>'+q+'</strong> is CLOSED. Targets shown are read-only.'}</div>`;
-
+  let html=`<div class="msg ${isOpen?'msg-success':'msg-info'}" style="display:block;margin-bottom:14px">
+    ${isOpen?`✅ Encoding is <strong>OPEN</strong> for ${q}. You may set your targets.`:`🔒 Encoding for <strong>${q}</strong> is CLOSED. Targets are read-only.`}
+  </div>`;
   PROGRAMS.forEach(prog=>{
     html+=`<div class="prog-header">${prog.name}</div><div class="prog-body">`;
     prog.sections.forEach(sec=>{
       html+=`<div class="ind-sub" style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:6px">${sec.title}</div>`;
       sec.indicators.forEach(ind=>{
         const roAssignedQ=quarterAssignments[ind.key];
-        const allowedQs=sdoAllowedQuarters(ind);
-        const isAllowed=allowedQs.includes(q);
+        const allowed=sdoAllowedQuarters(ind);
+        const isAllowed=allowed.includes(q);
         const roTarget=roAssignedQ?roMap[`${roAssignedQ}_${ind.key}`]:'—';
         const tVal=tm[`${q}_${ind.key}`]??'';
         const canEdit=isOpen&&isAllowed;
@@ -1747,7 +1733,7 @@ function renderSDOTargetBody(q){
           <div class="ind-label">${ind.label}</div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">
             RO Assigned Quarter: <strong>${roAssignedQ||'—'}</strong> &nbsp;|&nbsp; RO Target: <strong>${roTarget||'—'}</strong>
-            ${isAllowed?'':' <span style="color:#c62828">(Not allowed in '+q+')</span>'}
+            ${!isAllowed?` <span style="color:#c62828">(Not reportable in ${q})</span>`:''}
           </div>
           <div class="form-group" style="max-width:200px">
             <label>SDO Target for ${q}</label>
@@ -1758,7 +1744,6 @@ function renderSDOTargetBody(q){
     });
     html+=`</div>`;
   });
-
   if(isOpen){
     html+=`<div style="margin-top:16px"><button class="btn btn-primary" onclick="saveSDOTargets('${q}')">💾 Save ${q} Targets</button></div>`;
   }
@@ -1771,9 +1756,7 @@ async function saveSDOTargets(q){
   const rows=[];
   ALL_INDICATORS.forEach(ind=>{
     const el=document.getElementById(`sdotgt_${q}_${ind.key}`);
-    if(el&&el.value!==''){
-      rows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(el.value)||0});
-    }
+    if(el&&el.value!=='') rows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(el.value)||0});
   });
   try{
     if(rows.length){
@@ -1783,9 +1766,8 @@ async function saveSDOTargets(q){
         body:JSON.stringify(rows)
       });
     }
-    // update local cache
-    rows.forEach(r=>{if(!window._sdoTgtMap) window._sdoTgtMap={};window._sdoTgtMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
-    msg.textContent=`✓ ${q} SDO targets saved successfully!`;
+    rows.forEach(r=>{if(!window._sdoTgtTm) window._sdoTgtTm={};window._sdoTgtTm[`${r.quarter}_${r.field_key}`]=r.field_value;});
+    msg.textContent=`✓ ${q} SDO targets saved!`;
     msg.className='msg msg-success';
     msg.style.display='block';
     setTimeout(()=>msg.style.display='none',4000);
