@@ -492,82 +492,163 @@ async function renderDashboard(){
     sbGet('bar1_targets','?sdo_code=eq.RO')
   ]);
 
-  // Build lookup: sdo_quarter_key -> value
   const dataMap={};
   (allData||[]).forEach(r=>{dataMap[`${r.sdo_code}_${r.quarter}_${r.field_key}`]=r.field_value;});
   const roMap={};
   (roData||[]).forEach(r=>{roMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
 
-  let html=`<div class="page-title">📊 Dashboard</div><div class="page-sub">Regional Overview — BAR 1 2026</div>`;
-
-  // KPIs
+  // KPI summary
   const totalTeachers=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_Q1_p5_u1a`]||0),0);
   const totalClassrooms=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_Q1_p2_u1a`]||0),0);
   const totalFeeding=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_Q1_p4_u1a`]||0)+(dataMap[`${sdo}_Q1_p4_u1b`]||0),0);
-  html+=`<div class="kpi-grid">
+  const sdosSubmitted=[...new Set((allData||[]).map(r=>r.sdo_code))].filter(s=>SDO_LIST.includes(s)).length;
+
+  // Quarter filter tabs
+  let html=`
+  <div class="page-title">📊 Dashboard</div>
+  <div class="page-sub">All Programs & Indicators — Targets vs Accomplishments</div>
+  <div class="kpi-grid">
     <div class="kpi-card"><div class="kpi-label">Teachers Trained (Q1)</div><div class="kpi-val">${totalTeachers.toLocaleString()}</div><div class="kpi-sub">Across 12 SDOs</div></div>
     <div class="kpi-card"><div class="kpi-label">New Classrooms (Q1)</div><div class="kpi-val">${totalClassrooms.toLocaleString()}</div><div class="kpi-sub">Constructed</div></div>
     <div class="kpi-card"><div class="kpi-label">Feeding Beneficiaries (Q1)</div><div class="kpi-val">${totalFeeding.toLocaleString()}</div><div class="kpi-sub">Hot Meals + Milk</div></div>
-    <div class="kpi-card"><div class="kpi-label">SDOs Submitted</div><div class="kpi-val">${[...new Set((allData||[]).map(r=>r.sdo_code))].filter(s=>SDO_LIST.includes(s)).length}</div><div class="kpi-sub">of 12 SDOs</div></div>
-  </div>`;
-
-  // Charts per program/indicator
-  const quarters=['Q1','Q2','Q3','Q4'];
-  
-  PROGRAMS.forEach(prog=>{
-    html+=`<div class="prog-header">${prog.name}</div><div class="prog-body"><div class="chart-grid" id="charts_${prog.key}"></div></div>`;
-  });
+    <div class="kpi-card"><div class="kpi-label">SDOs with Data</div><div class="kpi-val">${sdosSubmitted}</div><div class="kpi-sub">of 12 SDOs</div></div>
+  </div>
+  <div class="q-tabs" style="margin-bottom:20px">
+    <button class="q-tab active" id="dqtab_ALL" onclick="switchDashQ('ALL',dataMap,roMap)">All Quarters</button>
+    <button class="q-tab" id="dqtab_Q1" onclick="switchDashQ('Q1',dataMap,roMap)">Q1</button>
+    <button class="q-tab" id="dqtab_Q2" onclick="switchDashQ('Q2',dataMap,roMap)">Q2</button>
+    <button class="q-tab" id="dqtab_Q3" onclick="switchDashQ('Q3',dataMap,roMap)">Q3</button>
+    <button class="q-tab" id="dqtab_Q4" onclick="switchDashQ('Q4',dataMap,roMap)">Q4</button>
+  </div>
+  <div id="dashPrograms"></div>`;
 
   mc.innerHTML=html;
 
-  // Render charts
+  // Store maps globally for tab switching
+  window._dashDataMap=dataMap;
+  window._dashRoMap=roMap;
+
+  renderDashPrograms('ALL', dataMap, roMap);
+
+  window.switchDashQ=function(q,dm,rm){
+    document.querySelectorAll('.q-tab').forEach(t=>t.classList.remove('active'));
+    const tab=document.getElementById(`dqtab_${q}`);
+    if(tab) tab.classList.add('active');
+    renderDashPrograms(q, window._dashDataMap, window._dashRoMap);
+  };
+}
+
+function renderDashPrograms(selectedQ, dataMap, roMap){
+  const container=document.getElementById('dashPrograms');
+  if(!container) return;
+
+  // Destroy existing charts
+  Chart.helpers.each(Chart.instances, c=>c.destroy());
+
+  const quarters=selectedQ==='ALL'?['Q1','Q2','Q3','Q4']:[selectedQ];
+  let html='';
+
   PROGRAMS.forEach(prog=>{
-    const container=document.getElementById(`charts_${prog.key}`);
-    if(!container) return;
-    
-    ALL_INDICATORS.filter(i=>i.prog===prog.key).forEach(ind=>{
-      // Find which quarter this indicator is assigned
-      const assignedQ=quarterAssignments[ind.key];
-      
-      quarters.forEach(q=>{
-        // compute consolidated accomplishment across SDOs
-        const consolidated=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_${q}_${ind.key}`]||0),0);
-        const roTarget=roMap[`${q}_${ind.key}`]||0;
-        
-        if(consolidated===0 && roTarget===0 && assignedQ!==q) return; // skip empty unassigned
-        
-        const div=document.createElement('div');
-        div.className='chart-card';
-        const cid='chart_'+Math.random().toString(36).slice(2);
-        div.innerHTML=`<h4>${ind.label} — ${q}</h4><canvas id="${cid}" height="140"></canvas>`;
-        container.appendChild(div);
-        
-        setTimeout(()=>{
-          const ctx=document.getElementById(cid);
-          if(!ctx) return;
-          new Chart(ctx,{
-            type:'bar',
-            data:{
-              labels:['RO Target','Accomplishment'],
-              datasets:[{
-                label: q,
-                data:[roTarget, consolidated],
-                backgroundColor:['rgba(220,38,38,0.75)','rgba(26,58,92,0.75)'],
-                borderColor:['#c62828','#1a3a5c'],
-                borderWidth:2,
-                borderRadius:6
-              }]
-            },
-            options:{
-              responsive:true,
-              plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString()}`}}},
-              scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:11}}}}
+    html+=`<div style="margin-bottom:28px">
+      <div class="prog-header">${prog.name}</div>
+      <div style="border:2px solid var(--primary);border-top:none;border-radius:0 0 10px 10px;padding:16px">`;
+
+    prog.sections.forEach(sec=>{
+      html+=`<div style="margin-bottom:16px">
+        <div style="font-size:13px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;background:#e8f0fb;border-radius:6px;margin-bottom:12px">
+          ${sec.title}
+        </div>`;
+
+      sec.indicators.forEach(ind=>{
+        const assignedQ=quarterAssignments[ind.key]||'—';
+        quarters.forEach(q=>{
+          const roTarget=roMap[`${q}_${ind.key}`]||0;
+          const accomplishment=SDO_LIST.reduce((s,sdo)=>s+(dataMap[`${sdo}_${q}_${ind.key}`]||0),0);
+          const pct=roTarget>0?Math.min(100,Math.round(accomplishment/roTarget*100)):0;
+          const met=accomplishment>=roTarget&&roTarget>0;
+          const barId='bar_'+Math.random().toString(36).slice(2,8);
+          const pieId='pie_'+Math.random().toString(36).slice(2,8);
+          const qLabel=selectedQ==='ALL'?` <span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700">${q}</span>`:'';
+
+          html+=`<div style="background:#fafbfc;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.4">
+              ${ind.label}${qLabel}
+              <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:8px">Assigned: ${assignedQ}</span>
+              <span class="badge ${met?'badge-met':'badge-below'}" style="float:right;margin-top:2px">${roTarget>0?(met?'MET':'BELOW'):'NO TARGET'}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;align-items:center">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:5px">
+                  <span style="color:#c62828">RO Target: <strong>${roTarget.toLocaleString()}</strong></span>
+                  <span style="color:var(--primary)">Accomplishment: <strong>${accomplishment.toLocaleString()}</strong></span>
+                  <span style="color:var(--muted)">${pct}%</span>
+                </div>
+                <canvas id="${barId}" height="100"></canvas>
+              </div>
+              <div style="text-align:center">
+                <canvas id="${pieId}" height="130" width="200"></canvas>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px">${pct}% of Target</div>
+              </div>
+            </div>
+          </div>`;
+
+          // Render charts after DOM insertion
+          setTimeout(()=>{
+            const barCtx=document.getElementById(barId);
+            const pieCtx=document.getElementById(pieId);
+            if(barCtx){
+              new Chart(barCtx,{
+                type:'bar',
+                data:{
+                  labels:['RO Target','Accomplishment'],
+                  datasets:[{
+                    data:[roTarget, accomplishment],
+                    backgroundColor:['rgba(198,40,40,0.7)','rgba(26,58,92,0.8)'],
+                    borderColor:['#c62828','#1a3a5c'],
+                    borderWidth:2,
+                    borderRadius:8
+                  }]
+                },
+                options:{
+                  responsive:true,
+                  indexAxis:'y',
+                  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.x.toLocaleString()}`}}},
+                  scales:{x:{beginAtZero:true,ticks:{font:{size:10},callback:v=>v.toLocaleString()}},y:{ticks:{font:{size:11}}}}
+                }
+              });
             }
-          });
-        },50);
+            if(pieCtx){
+              const remaining=Math.max(0,roTarget-accomplishment);
+              new Chart(pieCtx,{
+                type:'doughnut',
+                data:{
+                  labels:['Accomplishment','Remaining'],
+                  datasets:[{
+                    data:[accomplishment, remaining||1],
+                    backgroundColor:[met?'rgba(46,125,50,0.8)':'rgba(26,58,92,0.8)','rgba(220,220,220,0.4)'],
+                    borderColor:[met?'#2e7d32':'#1a3a5c','#ddd'],
+                    borderWidth:2
+                  }]
+                },
+                options:{
+                  responsive:false,
+                  cutout:'60%',
+                  plugins:{
+                    legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:12}},
+                    tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.toLocaleString()}`}}
+                  }
+                }
+              });
+            }
+          },80);
+        });
       });
+      html+=`</div>`;
     });
+    html+=`</div></div>`;
   });
+
+  container.innerHTML=html;
 }
 
 // ============================================================
