@@ -513,13 +513,7 @@ async function renderDashboard(){
   // Quarter filter tabs
   let html=`
   <div class="page-title">📊 Dashboard</div>
-  <div class="page-sub" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
-    <span>All Programs &amp; Indicators — Targets vs Accomplishments</span>
-    <span style="display:flex;align-items:center;gap:10px">
-      <span id="dashLastUpdated" style="font-size:12px;color:var(--muted)"></span>
-      <button class="btn btn-primary btn-sm" onclick="renderDashboard()" style="font-size:12px">🔄 Refresh Data</button>
-    </span>
-  </div>
+  <div class="page-sub">All Programs & Indicators — Targets vs Accomplishments</div>
   <div class="kpi-grid">
     <div class="kpi-card"><div class="kpi-label">Teachers Trained (Q1)</div><div class="kpi-val">${totalTeachers.toLocaleString()}</div><div class="kpi-sub">Across 12 SDOs</div></div>
     <div class="kpi-card"><div class="kpi-label">New Classrooms (Q1)</div><div class="kpi-val">${totalClassrooms.toLocaleString()}</div><div class="kpi-sub">Constructed</div></div>
@@ -550,16 +544,6 @@ async function renderDashboard(){
   };
 
   renderDashPrograms('ALL', dataMap, roMap);
-
-  // Show last updated time
-  const lu=document.getElementById('dashLastUpdated');
-  if(lu) lu.textContent='Last updated: '+new Date().toLocaleTimeString();
-
-  // Auto-refresh every 60 seconds while admin is on the dashboard
-  clearInterval(window._dashRefreshTimer);
-  window._dashRefreshTimer=setInterval(()=>{
-    if(currentPage==='dashboard') renderDashboard();
-  }, 60000);
 }
 
 function renderDashPrograms(selectedQ, dataMap, roMap){
@@ -1107,17 +1091,31 @@ async function renderEncode(){
       h+=`</div>`;
     });
     
-    // Show Save button when encoding is open OR when SDO has at least one approved correction
     const hasApproved=ALL_INDICATORS.some(ind=>{
       const ck=`${currentUser.username}_${q}_${ind.key}`;
       return correctionRequests[ck]?.status==='approved';
     });
+    const hasPending=ALL_INDICATORS.some(ind=>{
+      const ck=`${currentUser.username}_${q}_${ind.key}`;
+      return correctionRequests[ck]?.status==='pending';
+    });
+    const hasAnyData=ALL_INDICATORS.some(ind=>
+      dataMap[`${q}_${ind.key}`]!==undefined || targetMap[`${q}_${ind.key}`]!==undefined
+    );
+
+    h+=`<div id="encActBar_${q}" style="margin-top:20px;padding:14px 16px;background:#f7fafc;border:1px solid var(--border);border-radius:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">`;
+
     if(isOpen||hasApproved){
-      h+=`<div style="margin-top:16px"><button class="btn btn-primary" onclick="saveEncodeData('${q}')">📤 Submit ${q} Data to Regional Office</button></div>`;
+      h+=`<button class="btn btn-primary" id="submitBtn_${q}" onclick="saveEncodeData('${q}')">📤 Submit ${q} Data to Regional Office</button>`;
     }
-    if(!isOpen){
-      h+=`<div style="margin-top:12px"><button class="btn btn-warn" onclick="requestQuarterCorrection('${q}')">🔁 Request Correction for ${q}</button></div>`;
+    if(hasAnyData && !isOpen && !hasApproved){
+      if(hasPending){
+        h+=`<span class="badge badge-pending" style="font-size:13px;padding:6px 14px">⏳ Correction Request Pending — Awaiting Admin Approval</span>`;
+      } else {
+        h+=`<button class="btn btn-warn" id="corrBtn_${q}" onclick="requestQuarterCorrection('${q}')">🔁 Request Correction for ${q}</button>`;
+      }
     }
+    h+=`<span id="encMsgInline_${q}" style="font-size:13px;font-weight:600;display:none"></span></div>`;
     return h;
   }
   
@@ -1172,6 +1170,10 @@ async function saveEncodeData(q){
   });
   
   try{
+    // Show progress then success — update button in place, do NOT rebuild the body
+    const submitBtn=document.getElementById(`submitBtn_${q}`);
+    if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='⏳ Submitting…';}
+
     const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
     if(dataRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data`,{method:'POST',headers,body:JSON.stringify(dataRows)});
     if(targetRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets`,{method:'POST',headers,body:JSON.stringify(targetRows)});
@@ -1189,19 +1191,33 @@ async function saveEncodeData(q){
         body:JSON.stringify({status:'resolved'})
       });
     }
-
-    msg.textContent='✅ Data submitted to Regional Office successfully!';
-    msg.className='msg msg-success';
-    msg.style.display='block';
-    // Reload to reflect the new locked state
     await loadCorrectionRequests(currentUser.username);
-    // Update My Summary cache so it reflects new data without needing a full page reload
-    dataRows.forEach(r=>{if(window._summaryDataMap) window._summaryDataMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
-    targetRows.forEach(r=>{if(window._summaryTargetMap) window._summaryTargetMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
-    const activeTab=document.querySelector('.q-tab.active');
-    if(activeTab) window.switchEncodeQ(activeTab.textContent.trim());
-    setTimeout(()=>msg.style.display='none',5000);
+
+    // Update submit button to ✅ Submitted
+    if(submitBtn){
+      submitBtn.textContent='✅ Submitted';
+      submitBtn.style.background='var(--success)';
+      submitBtn.disabled=true;
+    }
+    // Show inline message
+    const msgInline=document.getElementById(`encMsgInline_${q}`);
+    if(msgInline){
+      msgInline.textContent=`✅ ${q} data submitted to the Regional Office!`;
+      msgInline.style.color='var(--success)';
+      msgInline.style.display='inline';
+    }
+    // Inject Request Correction button next to Submit button if not already there
+    const bar=document.getElementById(`encActBar_${q}`);
+    if(bar && !document.getElementById(`corrBtn_${q}`)){
+      const cb=document.createElement('button');
+      cb.id=`corrBtn_${q}`; cb.className='btn btn-warn';
+      cb.textContent=`🔁 Request Correction for ${q}`;
+      cb.onclick=()=>requestQuarterCorrection(q);
+      bar.insertBefore(cb, msgInline||null);
+    }
   }catch(e){
+    const submitBtnErr=document.getElementById(`submitBtn_${q}`);
+    if(submitBtnErr){submitBtnErr.disabled=false;submitBtnErr.style.background='';submitBtnErr.textContent=`📤 Submit ${q} Data to Regional Office`;}
     msg.textContent='❌ Error saving: '+e.message;
     msg.className='msg msg-error';
     msg.style.display='block';
@@ -1237,8 +1253,21 @@ async function requestQuarterCorrection(q){
     }
   }
   await loadCorrectionRequests(currentUser.username);
-  const activeTab=document.querySelector('.q-tab.active');
-  if(activeTab) window.switchEncodeQ(activeTab.textContent.trim());
+  // Update button in-place — do NOT rebuild the body (would lose the message)
+  const corrBtnEl=document.getElementById(`corrBtn_${q}`);
+  if(corrBtnEl){
+    const badge=document.createElement('span');
+    badge.className='badge badge-pending';
+    badge.style.cssText='font-size:13px;padding:6px 14px';
+    badge.textContent='⏳ Correction Request Sent — Awaiting Admin Approval';
+    corrBtnEl.parentNode.replaceChild(badge, corrBtnEl);
+  }
+  const msgInline=document.getElementById(`encMsgInline_${q}`);
+  if(msgInline){
+    msgInline.textContent=submitted>0?`✅ Correction request sent for ${submitted} indicator(s) in ${q}. Awaiting admin approval.`:`All indicators in ${q} already have pending or approved requests.`;
+    msgInline.style.color=submitted>0?'var(--success)':'#e65100';
+    msgInline.style.display='inline';
+  }
   const msg=document.getElementById('encMsg');
   if(msg){
     msg.textContent=submitted>0?`✓ Correction request submitted for ${submitted} indicator(s) in ${q}. Awaiting admin approval.`:`All indicators in ${q} already have pending or approved requests.`;
@@ -1300,10 +1329,7 @@ async function renderMySummary(){
   const roMap={};(roTargets||[]).forEach(r=>{roMap[`${r.quarter}_${r.field_key}`]=Number(r.field_value);});
 
   let html=`<div class="page-title">📊 My Summary</div>
-  <div class="page-sub" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-    <span>${currentUser.name} — Performance per indicator across all quarters</span>
-    <button class="btn btn-primary btn-sm" onclick="renderMySummary()" style="font-size:12px">🔄 Refresh Data</button>
-  </div>
+  <div class="page-sub">${currentUser.name} — Performance per indicator across all quarters</div>
   <div class="q-tabs">
     <button class="q-tab active" id="sqtab_ALL" onclick="switchSummaryQ('ALL')">All Quarters</button>
     <button class="q-tab" id="sqtab_Q1" onclick="switchSummaryQ('Q1')">Q1</button>
@@ -1558,11 +1584,8 @@ async function renderConsolidated(){
   }
   
   let html=`<div class="page-title">📋 Consolidated Table</div>
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-    <div class="q-tabs" style="margin-bottom:0">
-      ${['Q1','Q2','Q3','Q4'].map(q=>`<button class="q-tab ${q===activeQ?'active':''}" onclick="switchConsoQ('${q}')">${q}</button>`).join('')}
-    </div>
-    <button class="btn btn-primary btn-sm" onclick="renderConsolidated()" style="font-size:12px">🔄 Refresh Data</button>
+  <div class="q-tabs">
+    ${['Q1','Q2','Q3','Q4'].map(q=>`<button class="q-tab ${q===activeQ?'active':''}" onclick="switchConsoQ('${q}')">${q}</button>`).join('')}
   </div>
   <div id="consoBody">${buildConsoTable('Q1')}</div>`;
   
