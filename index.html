@@ -698,8 +698,8 @@ async function renderROTargets(){
       sec.indicators.forEach(ind=>{
         const assignedQ=quarterAssignments[ind.key]||'';
         // Get target for each quarter
-        const vals=['Q1','Q2','Q3','Q4'].map(q=>roMap[`${q}_${ind.key}`]||'');
-        const displayVal=vals.find(v=>v!=='')||'';
+        const vals=['Q1','Q2','Q3','Q4'].map(q=>roMap[`${q}_${ind.key}`]??'');
+        const displayVal=vals.find(v=>v!==''&&v!==null&&v!==undefined)??'';
         
         html+=`<div class="ind-group">
           <div class="ind-label">${ind.label}</div>
@@ -737,41 +737,35 @@ async function saveROTargets(){
     if(!qEl||!valEl) return;
     const q=qEl.value;
     const val=parseFloat(valEl.value)||0;
-    
-    // Save assignment
     if(q){
       assignData.push({indicator_key:ind.key, quarter:q});
-    }
-    
-    // Save target for the assigned quarter — always save, even if 0 (so admin can reset to zero)
-    if(q){
+      // Always save, even if 0, so admin can reset targets to zero anytime
       upsertData.push({sdo_code:'RO', quarter:q, field_key:ind.key, field_value:val});
     }
   });
 
   try{
-    // Delete all existing assignments first
+    const hdr={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+
+    // DELETE all existing RO targets first — ensures old values are fully cleared
+    await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?sdo_code=eq.RO`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+
+    // Delete all existing quarter assignments
     await sbDelete('bar1_quarter_assignments','?indicator_key=not.eq.__none__');
     
     // Insert new assignments
     if(assignData.length>0){
-      await fetch(`${SUPABASE_URL}/rest/v1/bar1_quarter_assignments`,{
-        method:'POST',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-        body:JSON.stringify(assignData)
-      });
+      await fetch(`${SUPABASE_URL}/rest/v1/bar1_quarter_assignments`,{method:'POST',headers:hdr,body:JSON.stringify(assignData)});
     }
     
-    // Save targets (with on_conflict so re-saves overwrite old values, including when set to 0)
+    // Insert fresh targets (on_conflict as safety net)
     if(upsertData.length>0){
-      await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{
-        method:'POST',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-        body:JSON.stringify(upsertData)
-      });
+      await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers:hdr,body:JSON.stringify(upsertData)});
     }
     
-    // Reload
     await loadQuarterAssignments();
     msg.textContent='✓ Targets and quarter assignments saved successfully!';
     msg.className='msg msg-success';
