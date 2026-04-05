@@ -308,7 +308,7 @@ PROGRAMS.forEach(p=>p.sections.forEach(s=>s.indicators.forEach(i=>ALL_INDICATORS
 let currentUser = null;
 let currentPage = null;
 let cachedData = {};
-let quarterAssignments = {}; // indicatorKey -> quarter
+let quarterAssignments = {}; // indicatorKey -> [quarters array]
 let encodingControl = {}; // quarter -> bool
 let pdfControl = {}; // quarter -> bool
 let correctionRequests = {}; // key -> {status, id}
@@ -486,7 +486,10 @@ async function loadCorrectionRequests(sdoCode=null, quarter=null){
 }
 
 function getIndicatorsForQuarter(q){
-  return ALL_INDICATORS.filter(i=>(quarterAssignments[i.key]||[]).includes(q));
+  return ALL_INDICATORS.filter(i=>{
+    const qs=quarterAssignments[i.key];
+    return qs&&qs.includes(q);
+  });
 }
 
 // ============================================================
@@ -572,91 +575,100 @@ function renderDashPrograms(selectedQ, dataMap, roMap){
 
       sec.indicators.forEach(ind=>{
         const assignedQs=quarterAssignments[ind.key]||[];
-        const assignedLabel=assignedQs.length?assignedQs.join(', '):'—';
-        quarters.forEach(q=>{
-          const roTarget=roMap[`${q}_${ind.key}`]||0;
-          const isAssignedQ=assignedQs.includes(q);
-          // Only show a card if this quarter is assigned for this indicator
-          if(!isAssignedQ) return;
-          const accomplishment=getConsolidatedAccomplishment(ind, dataMap, q);
-          const pct=roTarget>0?Math.min(100,Math.round(accomplishment/roTarget*100)):0;
-          const met=accomplishment>=roTarget&&roTarget>0;
-          const barId='bar_'+Math.random().toString(36).slice(2,8);
-          const pieId='pie_'+Math.random().toString(36).slice(2,8);
-          const qLabel=selectedQ==='ALL'?` <span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700">${q}</span>`:'';
+        if(!assignedQs.length) return; // skip unassigned in dashboard
 
-          html+=`<div style="background:#fafbfc;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.4">
-              ${ind.label}${qLabel}
-              <span style="font-size:11px;font-weight:600;color:var(--muted);margin-left:8px">Assigned: ${assignedLabel}</span>
-              <span class="badge ${met?'badge-met':'badge-below'}" style="float:right;margin-top:2px">${roTarget>0?(met?'MET':'BELOW'):'NO TARGET'}</span>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;align-items:center">
-              <div>
-                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:5px">
-                  <span style="color:#c62828">RO Target: <strong>${roTarget.toLocaleString()}</strong></span>
-                  <span style="color:var(--primary)">Accomplishment: <strong>${accomplishment.toLocaleString()}</strong></span>
-                  <span style="color:var(--muted)">${pct}%</span>
-                </div>
-                <canvas id="${barId}" height="100"></canvas>
-              </div>
-              <div style="text-align:center">
-                <canvas id="${pieId}" height="130" width="200"></canvas>
-                <div style="font-size:11px;color:var(--muted);margin-top:4px">${pct}% of Target</div>
-              </div>
-            </div>
-          </div>`;
+        // In "All Quarters" view: show one card per indicator with total/aggregate
+        // In filtered quarter view: only show if that quarter is assigned
+        if(selectedQ!=='ALL' && !assignedQs.includes(selectedQ)) return;
 
-          // Render charts after DOM insertion
-          setTimeout(()=>{
-            const barCtx=document.getElementById(barId);
-            const pieCtx=document.getElementById(pieId);
-            if(barCtx){
-              new Chart(barCtx,{
-                type:'bar',
-                data:{
-                  labels:['RO Target','Accomplishment'],
-                  datasets:[{
-                    data:[roTarget, accomplishment],
-                    backgroundColor:['rgba(198,40,40,0.7)','rgba(26,58,92,0.8)'],
-                    borderColor:['#c62828','#1a3a5c'],
-                    borderWidth:2,
-                    borderRadius:8
-                  }]
-                },
-                options:{
-                  responsive:true,
-                  indexAxis:'y',
-                  plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.x.toLocaleString()}`}}},
-                  scales:{x:{beginAtZero:true,ticks:{font:{size:10},callback:v=>v.toLocaleString()}},y:{ticks:{font:{size:11}}}}
+        // Which quarters to aggregate for accomplishment
+        const aggQs=selectedQ==='ALL'?assignedQs:assignedQs.filter(q=>q===selectedQ||selectedQ==='ALL');
+        const accomplishment=getConsolidatedAccomplishment(ind, dataMap);
+
+        // RO target: for multi-quarter, show the target for the selected quarter, or total
+        let roTarget=0;
+        if(selectedQ==='ALL'){
+          roTarget=getTotalROTarget(ind, roMap);
+        } else {
+          roTarget=Number(roMap[`${selectedQ}_${ind.key}`])||0;
+        }
+
+        const pct=roTarget>0?Math.min(100,Math.round(accomplishment/roTarget*100)):0;
+        const met=accomplishment>=roTarget&&roTarget>0;
+        const barId='bar_'+Math.random().toString(36).slice(2,8);
+        const pieId='pie_'+Math.random().toString(36).slice(2,8);
+        const qBadges=assignedQs.map(q=>`<span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;margin-right:2px">${q}</span>`).join('');
+
+        html+=`<div style="background:#fafbfc;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.4">
+            ${ind.label} ${qBadges}
+            <span class="badge ${met?'badge-met':'badge-below'}" style="float:right;margin-top:2px">${roTarget>0?(met?'MET':'BELOW'):'NO TARGET'}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;align-items:center">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:5px">
+                <span style="color:#c62828">RO Target: <strong>${roTarget.toLocaleString()}</strong></span>
+                <span style="color:var(--primary)">Accomplishment: <strong>${accomplishment.toLocaleString()}</strong></span>
+                <span style="color:var(--muted)">${pct}%</span>
+              </div>
+              <canvas id="${barId}" height="100"></canvas>
+            </div>
+            <div style="text-align:center">
+              <canvas id="${pieId}" height="130" width="200"></canvas>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">${pct}% of Target</div>
+            </div>
+          </div>
+        </div>`;
+
+        // Render charts after DOM insertion
+        setTimeout(()=>{
+          const barCtx=document.getElementById(barId);
+          const pieCtx=document.getElementById(pieId);
+          if(barCtx){
+            new Chart(barCtx,{
+              type:'bar',
+              data:{
+                labels:['RO Target','Accomplishment'],
+                datasets:[{
+                  data:[roTarget, accomplishment],
+                  backgroundColor:['rgba(198,40,40,0.7)','rgba(26,58,92,0.8)'],
+                  borderColor:['#c62828','#1a3a5c'],
+                  borderWidth:2,
+                  borderRadius:8
+                }]
+              },
+              options:{
+                responsive:true,
+                indexAxis:'y',
+                plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.x.toLocaleString()}`}}},
+                scales:{x:{beginAtZero:true,ticks:{font:{size:10},callback:v=>v.toLocaleString()}},y:{ticks:{font:{size:11}}}}
+              }
+            });
+          }
+          if(pieCtx){
+            const remaining=Math.max(0,roTarget-accomplishment);
+            new Chart(pieCtx,{
+              type:'doughnut',
+              data:{
+                labels:['Accomplishment','Remaining'],
+                datasets:[{
+                  data:[accomplishment, remaining||1],
+                  backgroundColor:[met?'rgba(46,125,50,0.8)':'rgba(26,58,92,0.8)','rgba(220,220,220,0.4)'],
+                  borderColor:[met?'#2e7d32':'#1a3a5c','#ddd'],
+                  borderWidth:2
+                }]
+              },
+              options:{
+                responsive:false,
+                cutout:'60%',
+                plugins:{
+                  legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:12}},
+                  tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.toLocaleString()}`}}
                 }
-              });
-            }
-            if(pieCtx){
-              const remaining=Math.max(0,roTarget-accomplishment);
-              new Chart(pieCtx,{
-                type:'doughnut',
-                data:{
-                  labels:['Accomplishment','Remaining'],
-                  datasets:[{
-                    data:[accomplishment, remaining||1],
-                    backgroundColor:[met?'rgba(46,125,50,0.8)':'rgba(26,58,92,0.8)','rgba(220,220,220,0.4)'],
-                    borderColor:[met?'#2e7d32':'#1a3a5c','#ddd'],
-                    borderWidth:2
-                  }]
-                },
-                options:{
-                  responsive:false,
-                  cutout:'60%',
-                  plugins:{
-                    legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:12}},
-                    tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.toLocaleString()}`}}
-                  }
-                }
-              });
-            }
-          },80);
-        });
+              }
+            });
+          }
+        },80);
       });
       html+=`</div>`;
     });
@@ -671,7 +683,7 @@ function renderDashPrograms(selectedQ, dataMap, roMap){
 // ============================================================
 async function renderROTargets(){
   const mc=document.getElementById('mainContent');
-  mc.innerHTML=`<div class="page-title">🎯 RO Annual Targets</div><div class="loading">Loading…</div>`;
+  mc.innerHTML=`<div class="page-title">🎯 RO Annual Targets</div><div class="page-sub">Set Regional Office targets per indicator per quarter. You have full control — assign any combination of quarters and set any target value (including 0).</div><div class="loading">Loading…</div>`;
   
   await loadQuarterAssignments();
   const roData=await sbGet('bar1_targets','?sdo_code=eq.RO');
@@ -679,79 +691,87 @@ async function renderROTargets(){
   (roData||[]).forEach(r=>{roMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
 
   let html=`<div class="page-title">🎯 RO Annual Targets</div>
-  <div class="page-sub">Check the quarters this indicator should be reported in, and set the RO target per quarter. Each quarter can have a different target. Total = sum across checked quarters.</div>
-  <div class="msg msg-success" id="roMsg" style="display:none"></div>
+  <div class="page-sub">Check the quarters you want each indicator to be reported in, then set the target per quarter. Admin has full control — targets can be 0 or any value, anytime.</div>
+  <div class="msg msg-success" id="roMsg"></div>
   <div class="flex" style="margin-bottom:16px">
     <button class="btn btn-primary" onclick="saveROTargets()">💾 Save All Targets & Assignments</button>
   </div>
-  <div style="overflow-x:auto;margin-bottom:12px">
-  <table style="min-width:700px;font-size:13px;border-collapse:collapse">
-    <thead><tr>
-      <th style="min-width:260px;padding:8px 10px;text-align:left">Indicator</th>
-      <th style="text-align:center;padding:8px;min-width:110px">Q1 ✓ / Target</th>
-      <th style="text-align:center;padding:8px;min-width:110px">Q2 ✓ / Target</th>
-      <th style="text-align:center;padding:8px;min-width:110px">Q3 ✓ / Target</th>
-      <th style="text-align:center;padding:8px;min-width:110px">Q4 ✓ / Target</th>
-      <th style="text-align:center;padding:8px;min-width:90px;background:#e3f2fd;color:#1565c0">Total Target</th>
-    </tr></thead><tbody>`;
+  <style>
+    .ro-ind-group{background:#fafbfc;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+    .ro-q-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .ro-q-cell{display:flex;align-items:center;gap:6px;background:#f0f4ff;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;min-width:160px;transition:.2s}
+    .ro-q-cell.active-q{border-color:var(--primary);background:#e8f0fb}
+    .ro-q-cell input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--primary)}
+    .ro-q-cell label{font-size:12px;font-weight:700;color:var(--primary);min-width:20px;cursor:pointer}
+    .ro-q-cell input[type=number]{width:90px;padding:4px 8px;border:1.5px solid var(--border);border-radius:5px;font-size:13px;font-weight:600}
+    .ro-q-cell input[type=number]:disabled{background:#eee;color:#aaa;cursor:not-allowed}
+    .ro-total-tag{font-size:12px;font-weight:700;color:var(--success);margin-left:8px;background:#e8f5e9;border-radius:5px;padding:3px 10px}
+  </style>`;
 
   PROGRAMS.forEach(prog=>{
-    html+=`<tr><td colspan="6" style="background:var(--primary);color:#fff;font-weight:700;font-size:13px;padding:8px 10px">${prog.name}</td></tr>`;
+    html+=`<div class="prog-header">${prog.name}</div><div class="prog-body">`;
     prog.sections.forEach(sec=>{
-      html+=`<tr><td colspan="6" style="background:#e8f0fb;font-weight:700;font-size:11px;color:var(--primary);padding:5px 10px;text-transform:uppercase;letter-spacing:.4px">${sec.title}</td></tr>`;
+      html+=`<div class="ind-sub" style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:8px">${sec.title}</div>`;
       sec.indicators.forEach(ind=>{
         const assignedQs=quarterAssignments[ind.key]||[];
-        let qCells='';
+        // Get target for each quarter
+        const qVals={};
+        ['Q1','Q2','Q3','Q4'].forEach(q=>{qVals[q]=roMap[`${q}_${ind.key}`]??'';});
+        
+        html+=`<div class="ro-ind-group" id="roig_${ind.key}">
+          <div class="ind-label">${ind.label} <span style="font-size:11px;color:var(--muted);font-weight:500">(${ind.type==='pct'?'%':'count'})</span>
+            <span class="ro-total-tag" id="rototal_${ind.key}">Total Target: ${calcROTotal(ind, assignedQs, qVals)}</span>
+          </div>
+          <div class="ro-q-row">`;
+        
         ['Q1','Q2','Q3','Q4'].forEach(q=>{
-          const checked=assignedQs.includes(q);
-          const val=roMap[`${q}_${ind.key}`]??'';
-          qCells+=`<td style="text-align:center;padding:6px 8px;border-bottom:1px solid var(--border)">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-              <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;cursor:pointer">
-                <input type="checkbox" id="qa_${ind.key}_${q}" ${checked?'checked':''}
-                  onchange="updateROTotal('${ind.key}')"
-                  style="width:14px;height:14px;cursor:pointer">
-                ${q}
-              </label>
-              <input type="number" id="rot_${ind.key}_${q}" value="${val}" placeholder="0" min="0"
-                style="width:80px;padding:4px 6px;border:1.5px solid var(--border);border-radius:5px;font-size:12px;text-align:center"
-                oninput="updateROTotal('${ind.key}')">
-            </div>
-          </td>`;
+          const isChecked=assignedQs.includes(q);
+          const tVal=qVals[q];
+          html+=`<div class="ro-q-cell ${isChecked?'active-q':''}" id="roqcell_${ind.key}_${q}">
+            <input type="checkbox" id="qchk_${ind.key}_${q}" ${isChecked?'checked':''}
+              onchange="roQToggle('${ind.key}','${q}',this.checked,'${ind.type}')">
+            <label for="qchk_${ind.key}_${q}">${q}</label>
+            <input type="number" id="rot_${q}_${ind.key}" value="${tVal}" placeholder="0" min="0"
+              style="width:90px" ${isChecked?'':'disabled'}
+              oninput="updateROTotal('${ind.key}','${ind.type}')">
+          </div>`;
         });
-        html+=`<tr>
-          <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${ind.label}</td>
-          ${qCells}
-          <td style="text-align:center;padding:6px 8px;border-bottom:1px solid var(--border);background:#e3f2fd;font-weight:700;color:#1565c0" id="rotTotal_${ind.key}">
-            ${computeROTotal(ind.key, roMap, assignedQs)}
-          </td>
-        </tr>`;
+        
+        html+=`</div></div>`;
       });
     });
+    html+=`</div>`;
   });
 
-  html+=`</tbody></table></div>`;
   mc.innerHTML=html;
+
+  // Define helpers in window scope
+  window.roQToggle=function(indKey, q, checked, indType){
+    const cell=document.getElementById(`roqcell_${indKey}_${q}`);
+    const numInput=document.getElementById(`rot_${q}_${indKey}`);
+    if(cell) cell.classList.toggle('active-q', checked);
+    if(numInput) numInput.disabled=!checked;
+    updateROTotal(indKey, indType);
+  };
+
+  window.updateROTotal=function(indKey, indType){
+    const tag=document.getElementById(`rototal_${indKey}`);
+    if(!tag) return;
+    const checkedQs=['Q1','Q2','Q3','Q4'].filter(q=>document.getElementById(`qchk_${indKey}_${q}`)?.checked);
+    const vals={};
+    ['Q1','Q2','Q3','Q4'].forEach(q=>{vals[q]=document.getElementById(`rot_${q}_${indKey}`)?.value??'';});
+    tag.textContent='Total Target: '+calcROTotal({type:indType}, checkedQs, vals);
+  };
 }
 
-function computeROTotal(indKey, roMap, assignedQs){
-  let total=0;
-  assignedQs.forEach(q=>{
-    const v=roMap[`${q}_${indKey}`];
-    if(v!==undefined&&v!==null) total+=Number(v);
-  });
-  return total||0;
-}
-
-function updateROTotal(indKey){
-  let total=0;
-  ['Q1','Q2','Q3','Q4'].forEach(q=>{
-    const cb=document.getElementById(`qa_${indKey}_${q}`);
-    const inp=document.getElementById(`rot_${indKey}_${q}`);
-    if(cb&&cb.checked&&inp) total+=parseFloat(inp.value)||0;
-  });
-  const el=document.getElementById(`rotTotal_${indKey}`);
-  if(el) el.textContent=total;
+function calcROTotal(ind, assignedQs, qVals){
+  if(!assignedQs||!assignedQs.length) return '—';
+  const nums=assignedQs.map(q=>Number(qVals[q])||0);
+  if(ind.type==='pct'){
+    const avg=nums.reduce((a,b)=>a+b,0)/nums.length;
+    return Math.round(avg*100)/100;
+  }
+  return nums.reduce((a,b)=>a+b,0);
 }
 
 async function saveROTargets(){
@@ -763,12 +783,14 @@ async function saveROTargets(){
   
   ALL_INDICATORS.forEach(ind=>{
     ['Q1','Q2','Q3','Q4'].forEach(q=>{
-      const cb=document.getElementById(`qa_${ind.key}_${q}`);
-      const valEl=document.getElementById(`rot_${ind.key}_${q}`);
-      if(!cb||!valEl) return;
-      if(cb.checked){
+      const chkEl=document.getElementById(`qchk_${ind.key}_${q}`);
+      const valEl=document.getElementById(`rot_${q}_${ind.key}`);
+      if(!chkEl||!valEl) return;
+      if(chkEl.checked){
         assignData.push({indicator_key:ind.key, quarter:q});
-        upsertData.push({sdo_code:'RO', quarter:q, field_key:ind.key, field_value:parseFloat(valEl.value)||0});
+        // Always save even if 0 — admin has full control
+        const val=valEl.value===''?0:parseFloat(valEl.value)||0;
+        upsertData.push({sdo_code:'RO', quarter:q, field_key:ind.key, field_value:val});
       }
     });
   });
@@ -776,13 +798,21 @@ async function saveROTargets(){
   try{
     const hdr={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
 
-    // Clear all existing RO targets and assignments, then reinsert fresh
-    await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?sdo_code=eq.RO`,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+    // DELETE all existing RO targets first
+    await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?sdo_code=eq.RO`,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+
+    // Delete all existing quarter assignments
     await sbDelete('bar1_quarter_assignments','?indicator_key=not.eq.__none__');
     
+    // Insert new assignments (multi-quarter per indicator)
     if(assignData.length>0){
-      await fetch(`${SUPABASE_URL}/rest/v1/bar1_quarter_assignments?on_conflict=indicator_key,quarter`,{method:'POST',headers:hdr,body:JSON.stringify(assignData)});
+      await fetch(`${SUPABASE_URL}/rest/v1/bar1_quarter_assignments`,{method:'POST',headers:hdr,body:JSON.stringify(assignData)});
     }
+    
+    // Insert fresh targets
     if(upsertData.length>0){
       await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers:hdr,body:JSON.stringify(upsertData)});
     }
@@ -980,21 +1010,42 @@ async function handleCorrection(id, status){
 }
 
 // ============================================================
-// PAGE: ENCODE DATA (SDO) — with cumulative quarter logic
+// PAGE: ENCODE DATA (SDO) — multi-quarter assignment logic
 // ============================================================
 // Rules:
-//   If RO assigns indicator to Q1 → SDO can only report in Q1
-//   If RO assigns to Q2 → SDO can report in Q1 and/or Q2
-//   If RO assigns to Q3 → SDO can report in Q1, Q2, and/or Q3
-//   If RO assigns to Q4 → SDO can report in Q1, Q2, Q3, and/or Q4
-// Aggregation: SDO accomplishments in all quarters UP TO the RO quarter are
-//   summed (for counts) or averaged (for percentages) when displayed in RO dashboard.
+//   Admin assigns each indicator to one or more quarters (e.g. Q1 only, Q1+Q3, all four)
+//   SDOs can encode in exactly the quarters admin assigned for each indicator
+//   Each assigned quarter has its own independent target and accomplishment
+//   Aggregation: all assigned-quarter accomplishments are summed (counts) or averaged (%s)
 // ============================================================
 const Q_ORDER=['Q1','Q2','Q3','Q4'];
 function qIndex(q){return Q_ORDER.indexOf(q);}
 function sdoAllowedQuarters(ind){
-  // Returns which quarters this indicator is assigned to (SDO can encode in those quarters)
-  return quarterAssignments[ind.key]||[];
+  // Returns which quarters SDO is allowed to encode for this indicator
+  // With multi-quarter support: returns all quarters assigned by admin
+  const roQs=quarterAssignments[ind.key];
+  if(!roQs||!roQs.length) return [];
+  return Q_ORDER.filter(q=>roQs.includes(q));
+}
+// Helper: get the "display" quarter label for an indicator (sorted list)
+function getAssignedQLabel(ind){
+  const qs=quarterAssignments[ind.key];
+  if(!qs||!qs.length) return '—';
+  return Q_ORDER.filter(q=>qs.includes(q)).join(', ');
+}
+// Helper: get RO target for an indicator in a specific quarter
+function getROTarget(ind, q, roMap){
+  return roMap[`${q}_${ind.key}`]??0;
+}
+// Helper: get total RO target across all assigned quarters
+function getTotalROTarget(ind, roMap){
+  const qs=quarterAssignments[ind.key];
+  if(!qs||!qs.length) return 0;
+  if(ind.type==='pct'){
+    const vals=qs.map(q=>roMap[`${q}_${ind.key}`]).filter(v=>v!==undefined&&v!==null&&v!=='');
+    return vals.length?Math.round(vals.reduce((a,b)=>a+Number(b),0)/vals.length*100)/100:0;
+  }
+  return qs.reduce((s,q)=>s+(Number(roMap[`${q}_${ind.key}`])||0),0);
 }
 
 async function renderEncode(){
@@ -1045,8 +1096,8 @@ async function renderEncode(){
       prog.sections.forEach(sec=>{
         h+=`<div class="ind-sub" style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:6px">${sec.title}</div>`;
         sec.indicators.forEach(ind=>{
-          const roAssignedQs=quarterAssignments[ind.key]||[];  // now array
-          const allowedQs=sdoAllowedQuarters(ind);             // same array
+          const roAssignedQs=quarterAssignments[ind.key]||[];
+          const allowedQs=sdoAllowedQuarters(ind);
           const isAllowedHere=allowedQs.includes(q);
           const corrKey=`${currentUser.username}_${q}_${ind.key}`;
           const corrStatus=correctionRequests[corrKey]?.status;
@@ -1057,17 +1108,19 @@ async function renderEncode(){
           const tVal=targetMap[`${q}_${ind.key}`]??'';
           const aVal=dataMap[`${q}_${ind.key}`]??'';
           const rVal=remarkMap[`${q}_${ind.key}`]??'';
-          const roTarget=isAllowedHere?roMap[`${q}_${ind.key}`]??'':'';
+          const roTarget=roAssignedQs.length?(roMap[`${q}_${ind.key}`]||''):'';
 
           // Build hint about reporting rule
           let hint='';
           if(!roAssignedQs.length){
             hint=`<span style="font-size:11px;color:#999">⬤ Not yet assigned by Admin</span>`;
           } else if(isAllowedHere){
-            hint=`<span style="font-size:11px;color:#2e7d32;font-weight:600">✅ Assigned to this quarter — RO Target: <strong>${roTarget!==''?roTarget:'—'}</strong></span>`;
-            if(roAssignedQs.length>1) hint+=` <span style="font-size:11px;color:var(--muted)">(Also assigned to: ${roAssignedQs.filter(x=>x!==q).join(', ')})</span>`;
+            const roTgt=roMap[`${q}_${ind.key}`];
+            hint=`<span style="font-size:11px;color:#2e7d32;font-weight:600">✅ Assigned to ${q} — RO Target: <strong>${roTgt!==undefined&&roTgt!==''?roTgt:'—'}</strong></span>`;
+            const otherQs=roAssignedQs.filter(x=>x!==q);
+            if(otherQs.length) hint+=` <span style="font-size:11px;color:var(--muted)">(Also assigned in: ${otherQs.join(', ')})</span>`;
           } else {
-            hint=`<span style="font-size:11px;color:#aaa">⬤ Not assigned to ${q} (assigned to: ${roAssignedQs.join(', ')||'—'})</span>`;
+            hint=`<span style="font-size:11px;color:#aaa">⬤ Not assigned in ${q} (assigned: ${roAssignedQs.join(', ')||'—'})</span>`;
           }
 
           h+=`<div class="ind-group" style="${!isAllowedHere&&!corrApproved?'opacity:0.45':''}">
@@ -1241,16 +1294,14 @@ async function requestQuarterCorrection(q){
 // ============================================================
 // CUMULATIVE AGGREGATION HELPER
 // ============================================================
-// For a given indicator and the RO-assigned reporting quarter,
-// aggregate all SDO accomplishments from Q1 up to the RO quarter.
-// - Percentage indicators (type='pct'): AVERAGE across quarters with data
-// - Count indicators (type='num'): SUM across quarters with data
-function getConsolidatedAccomplishment(ind, allDataMap, forQ){
-  // forQ: if specified, only aggregate data for that specific quarter
-  // if not specified, aggregate across all assigned quarters
-  const assignedQs=quarterAssignments[ind.key]||[];
-  const relevantQs=forQ?[forQ]:assignedQs;
-  if(!relevantQs.length) return 0;
+// For a given indicator and all RO-assigned reporting quarters,
+// aggregate all SDO accomplishments across those quarters.
+// - Percentage indicators (type='pct'): AVERAGE across all assigned quarters with data
+// - Count indicators (type='num'): SUM across all assigned quarters with data
+function getConsolidatedAccomplishment(ind, allDataMap){
+  const roQs=quarterAssignments[ind.key];
+  if(!roQs||!roQs.length) return 0;
+  const relevantQs=Q_ORDER.filter(q=>roQs.includes(q));
   
   let total=0;
   SDO_LIST.forEach(sdo=>{
@@ -1335,12 +1386,11 @@ function renderSummaryBody(selectedQ){
       sec.indicators.forEach(ind=>{
         const roAssignedQs=quarterAssignments[ind.key]||[];
         quarters.forEach(q=>{
-          const isAssigned=roAssignedQs.includes(q);
-          const roTarget=isAssigned?(roMap[`${q}_${ind.key}`]||0):0;
+          const roTarget=(roAssignedQs.includes(q))?(roMap[`${q}_${ind.key}`]||0):0;
           const sdoTarget=targetMap[`${q}_${ind.key}`];
           const accomplishment=dataMap[`${q}_${ind.key}`];
           // Show row if: there is any data, or it's an assigned quarter
-          if(sdoTarget===undefined && accomplishment===undefined && !isAssigned) return;
+          if(sdoTarget===undefined && accomplishment===undefined && !roAssignedQs.includes(q)) return;
           secHasAny=true; progHasAny=true;
           const sT=sdoTarget??0;
           const acc=accomplishment??0;
@@ -1388,23 +1438,26 @@ async function renderRegional(){
   let html=`<div class="page-title">🌐 Regional Totals</div>
   <div class="page-sub">Consolidated accomplishment vs RO target (cumulative aggregation applied). Individual SDO data is not shown.</div>`;
   
-  // Show by RO-assigned quarter grouping
+  // Show by each quarter — indicators that have that quarter assigned
   ['Q1','Q2','Q3','Q4'].forEach(q=>{
-    const indsForQ=ALL_INDICATORS.filter(i=>(quarterAssignments[i.key]||[]).includes(q));
+    const indsForQ=ALL_INDICATORS.filter(i=>{
+      const qs=quarterAssignments[i.key];
+      return qs&&qs.includes(q);
+    });
     if(!indsForQ.length) return;
-    html+=`<div class="card"><h3>RO Reporting Quarter: ${q}</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Indicators assigned to be reported in ${q}.</p>
+    html+=`<div class="card"><h3>Reporting Quarter: ${q}</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Indicators assigned to report in ${q}. Accomplishments are aggregated across all assigned quarters per indicator.</p>
     <table><thead><tr><th>Indicator</th><th>RO Target (${q})</th><th>Consolidated Accomplishment</th><th>Status</th></tr></thead><tbody>`;
     indsForQ.forEach(ind=>{
       const roT=roMap[`${q}_${ind.key}`]||0;
-      const consolidated=getConsolidatedAccomplishment(ind, dataMap, q);
+      const consolidated=getConsolidatedAccomplishment(ind, dataMap);
       const met=consolidated>=roT&&roT>0;
       html+=`<tr><td style="font-size:12px">${ind.label}</td><td>${roT||'—'}</td><td style="font-weight:700">${consolidated||'—'}</td><td>${roT>0?`<span class="badge ${met?'badge-met':'badge-below'}">${met?'MET':'BELOW'}</span>`:'—'}</td></tr>`;
     });
     html+=`</tbody></table></div>`;
   });
 
-  const unassigned=ALL_INDICATORS.filter(i=>!(quarterAssignments[i.key]||[]).length);
+  const unassigned=ALL_INDICATORS.filter(i=>!quarterAssignments[i.key]||!quarterAssignments[i.key].length);
   if(unassigned.length){
     html+=`<div class="card"><h3>Unassigned Indicators</h3><p style="font-size:12px;color:var(--muted)">These indicators have not been assigned to a reporting quarter by the Administrator.</p><table><thead><tr><th>Indicator</th></tr></thead><tbody>`;
     unassigned.forEach(ind=>{html+=`<tr><td style="font-size:12px">${ind.label}</td></tr>`;});
@@ -1482,10 +1535,15 @@ async function renderConsolidated(){
   let activeQ='Q1';
   
   function buildConsoTable(q){
-    const indsForQ=ALL_INDICATORS.filter(i=>(quarterAssignments[i.key]||[]).includes(q));
+    // Show indicators that have this quarter assigned
+    const indsForQ=ALL_INDICATORS.filter(i=>{
+      const qs=quarterAssignments[i.key];
+      return qs&&qs.includes(q);
+    });
     
     let h=`<div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-      Showing indicators assigned to <strong>${q}</strong>. RO Target shown is for ${q} specifically.
+      Showing indicators assigned to <strong>${q}</strong>. 
+      SDO values shown are per-quarter accomplishments for ${q}. Consolidated total aggregates all assigned quarters.
     </div>
     <div style="overflow-x:auto"><table style="min-width:1000px"><thead><tr>
       <th style="min-width:240px">Indicator</th>
@@ -1509,9 +1567,9 @@ async function renderConsolidated(){
           // Per-SDO value for this specific quarter
           const sdoVals=SDO_LIST.map(sdo=>{
             const v=dataMap[`${sdo}_${q}_${ind.key}`];
-            return v!==undefined&&v!==null?Number(v):null;
+            return (v!==undefined&&v!==null)?Number(v):null;
           });
-          const consolidated=getConsolidatedAccomplishment(ind, dataMap, q);
+          const consolidated=getConsolidatedAccomplishment(ind, dataMap);
           const met=consolidated>=(roT||0)&&(roT||0)>0;
           h+=`<tr>
             <td style="font-size:12px">${ind.label}</td>
@@ -1690,14 +1748,14 @@ function renderUserGuide(){
     <p><strong>📋 Consolidated Table</strong> — Full matrix of all 12 SDOs vs all indicators per quarter. Cumulative values are applied automatically.</p>
     <p><strong>📁 SDO Submissions</strong> — Click any SDO card to <strong>view and directly edit</strong> their submitted data. Change any Target or Accomplishment and click <em>Save Changes</em>.</p>
     <p><strong>💬 Consolidated Remarks</strong> — Read all SDO remarks per indicator per quarter.</p>
-    <p><strong>🎯 RO Annual Targets</strong> — Set the RO target for each indicator and assign it to a reporting quarter. Click <em>Save All Targets & Assignments</em>.</p>
+    <p><strong>🎯 RO Annual Targets</strong> — Set the RO target for each indicator. Check any combination of Q1–Q4 per indicator and enter a target per checked quarter. Admin has full control anytime — targets can be 0 or any value, and can be changed at any time. Dashboard reflects changes immediately.</p>
     <p><strong>🔒 Encoding Control</strong> — Toggle encoding OPEN/CLOSED per quarter. SDOs can only encode when you set their quarter to OPEN.</p>
     <p><strong>📄 PDF Upload Control</strong> — Toggle PDF uploads OPEN/CLOSED per quarter.</p>
     <p><strong>✏️ Correction Requests</strong> — Approve or Deny SDO requests to re-encode data after a quarter is closed.</p>
   </div></div>`:`
   <div class="card"><h3>SDO Account Guide</h3>
   <div style="font-size:13px;line-height:1.9">
-    <p><strong>✏️ Encode Data</strong> — Enter your accomplishments per indicator per quarter. Only indicators assigned by Admin to that quarter are editable. Click <strong>☁️ Save Data to Cloud</strong> at the bottom to save.</p>
+    <p><strong>✏️ Encode Data</strong> — Enter your accomplishments per indicator per quarter. Only indicators assigned by Admin to that quarter are editable. Each quarter has its own target and accomplishment fields. Click <strong>📤 Submit Data to Regional Office</strong> at the bottom to save.</p>
     <p><strong>🎯 SDO Targets</strong> — Set your division-level targets per indicator. Follow the quarter assignments set by Admin. Targets here are your own planning targets.</p>
     <p><strong>📊 My Summary</strong> — View your encoded data across all indicators and quarters, with comparison against RO targets and your SDO targets.</p>
     <p><strong>🌐 Regional Totals</strong> — View the consolidated regional accomplishments vs RO targets. Individual SDO figures are not shown.</p>
@@ -1706,7 +1764,7 @@ function renderUserGuide(){
   </div></div>`}
   <div class="card"><h3>ℹ️ Notes</h3>
   <div style="font-size:13px;line-height:1.9">
-    <p>• Cumulative reporting: if an indicator is assigned to Q3, SDOs may encode in Q1, Q2, and/or Q3. The system sums (counts) or averages (percentages) all quarter entries for the RO consolidated total.</p>
+    <p>• Multi-quarter reporting: Admin may assign each indicator to one or more quarters (e.g., Q1 only, Q1+Q2, all four). Each assigned quarter has its own independent target and accomplishment. The RO consolidated total sums (for counts) or averages (for percentages) all assigned-quarter values.</p>
     <p>• Always click Save after encoding — data is not auto-saved.</p>
     <p>• For issues, contact the Regional Office ICT coordinator.</p>
   </div></div>`;
@@ -1761,14 +1819,15 @@ function renderSDOTgtBody(q){
         const roAssignedQs=quarterAssignments[ind.key]||[];
         const allowed=sdoAllowedQuarters(ind);
         const isAllowed=allowed.includes(q);
-        const roTarget=isAllowed?(roMap[`${q}_${ind.key}`]??'—'):'—';
+        const roTarget=roAssignedQs.includes(q)?(roMap[`${q}_${ind.key}`]??'—'):'—';
         const tVal=tm[`${q}_${ind.key}`]??'';
         const canEdit=isOpen&&isAllowed;
         html+=`<div class="ind-group" style="${!isAllowed?'opacity:0.45':''}">
           <div class="ind-label">${ind.label}</div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">
-            RO Assigned Quarter(s): <strong>${roAssignedQs.join(', ')||'—'}</strong> &nbsp;|&nbsp; RO Target for ${q}: <strong>${roTarget}</strong>
-            ${!isAllowed?` <span style="color:#c62828">(Not reportable in ${q})</span>`:''}
+            RO Assigned Quarters: <strong>${roAssignedQs.length?Q_ORDER.filter(x=>roAssignedQs.includes(x)).join(', '):'—'}</strong>
+            &nbsp;|&nbsp; RO Target for ${q}: <strong>${roTarget}</strong>
+            ${!isAllowed?` <span style="color:#c62828">(Not assigned in ${q})</span>`:''}
           </div>
           <div class="form-group" style="max-width:200px">
             <label>SDO Target for ${q}</label>
@@ -1795,7 +1854,7 @@ async function saveSDOTargets(q){
   });
   try{
     if(rows.length){
-      await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{
+      await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets`,{
         method:'POST',
         headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
         body:JSON.stringify(rows)
