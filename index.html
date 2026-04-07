@@ -1153,15 +1153,19 @@ async function renderEncode(){
       h+=`</div>`;
     });
     
-    // Show Save button when encoding is open OR when SDO has at least one approved correction
+    // Show Submit button when encoding is OPEN (and there are assigned indicators), OR when there's an approved correction
     const hasApproved=ALL_INDICATORS.some(ind=>{
       const ck=`${currentUser.username}_${q}_${ind.key}`;
       return correctionRequests[ck]?.status==='approved';
     });
-    if(isOpen||hasApproved){
+    const hasAssigned=ALL_INDICATORS.some(ind=>sdoAllowedQuarters(ind).includes(q));
+    if(isOpen && hasAssigned){
+      h+=`<div style="margin-top:16px"><button class="btn btn-primary" onclick="saveEncodeData('${q}')">📤 Submit ${q} Data to Regional Office</button></div>`;
+    } else if(hasApproved){
       h+=`<div style="margin-top:16px"><button class="btn btn-primary" onclick="saveEncodeData('${q}')">📤 Submit ${q} Data to Regional Office</button></div>`;
     }
-    if(!isOpen){
+    // Show Request Correction button when encoding is CLOSED and there are assigned indicators in this quarter
+    if(!isOpen && hasAssigned){
       h+=`<div style="margin-top:12px"><button class="btn btn-warn" onclick="requestQuarterCorrection('${q}')">🔁 Request Correction for ${q}</button></div>`;
     }
     return h;
@@ -1199,8 +1203,8 @@ async function saveEncodeData(q){
     const corrApproved=correctionRequests[corrKey]?.status==='approved';
     const isOpen=encodingControl[q]||false;
     const isAllowed=allowedQs.includes(q);
-    // Allow saving if: encoding is open (regardless of assignment) OR correction is approved
-    if(!isOpen && !corrApproved) return;
+    // Allow saving ONLY if: (encoding is open AND indicator is assigned to this quarter) OR correction is approved
+    if((!isOpen || !isAllowed) && !corrApproved) return;
     
     const tEl=document.getElementById(`tgt_${q}_${ind.key}`);
     const aEl=document.getElementById(`acc_${q}_${ind.key}`);
@@ -1676,7 +1680,7 @@ async function renderSubmissions(){
   window.saveAdminEdit=async function(sdo){
     const msg=document.getElementById('adminEditMsg');
     msg.textContent='Saving…'; msg.className='msg msg-info'; msg.style.display='block';
-    const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+    const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'};
     const dRows=[],tRows=[];
     ['Q1','Q2','Q3','Q4'].forEach(q=>{
       ALL_INDICATORS.forEach(ind=>{
@@ -1687,8 +1691,9 @@ async function renderSubmissions(){
       });
     });
     try{
-      if(tRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets`,{method:'POST',headers,body:JSON.stringify(tRows)});
-      if(dRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data`,{method:'POST',headers,body:JSON.stringify(dRows)});
+      // Use on_conflict in URL so Supabase actually upserts (updates existing rows)
+      if(tRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(tRows)});
+      if(dRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(dRows)});
       msg.textContent='✓ Changes saved successfully!'; msg.className='msg msg-success';
       setTimeout(()=>msg.style.display='none',4000);
     }catch(e){
