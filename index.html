@@ -1154,23 +1154,49 @@ async function renderEncode(){
       h+=`</div>`;
     });
     
-    // Submit button: show if encoding is open
+    // Check if this SDO has already submitted data for this quarter
+    const hasSubmittedThisQ = ALL_INDICATORS.some(ind=>{
+      return (window._encDataMap||{})[`${q}_${ind.key}`] !== undefined;
+    });
+
+    // Check for approved corrections
     const hasApproved=ALL_INDICATORS.some(ind=>{
       const ck=`${currentUser.username}_${q}_${ind.key}`;
       return correctionRequests[ck]?.status==='approved';
     });
-    if(isOpen){
-      h+=`<div style="margin-top:16px"><button class="btn btn-success" style="font-size:14px;padding:12px 24px" onclick="saveEncodeData('${q}')">📤 Submit ${q} Data to Regional Office</button></div>`;
-    }
-    // Request correction button: show if encoding is closed AND there are indicators assigned to this quarter
+
     const hasIndsThisQ=ALL_INDICATORS.some(ind=>sdoAllowedQuarters(ind).includes(q));
-    if(!isOpen && hasIndsThisQ){
-      h+=`<div style="margin-top:12px"><button class="btn btn-warn" onclick="requestQuarterCorrection('${q}')">🔁 Request Correction for ${q}</button></div>`;
+
+    h+=`<div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid var(--border)">`;
+
+    if(isOpen){
+      // Show submit button (always clickable when open)
+      h+=`<button class="btn btn-success" style="font-size:14px;padding:12px 28px;display:flex;align-items:center;gap:8px" onclick="saveEncodeData('${q}')">
+        📤 Submit ${q} Data to Regional Office
+      </button>`;
+      if(hasSubmittedThisQ){
+        h+=`<span style="display:flex;align-items:center;gap:6px;color:var(--success);font-weight:700;font-size:13px">
+          ✅ ${q} data submitted to the Regional Office!
+        </span>`;
+      }
+    } else {
+      // Encoding closed — show "Submitted" badge + Request Correction button
+      if(hasSubmittedThisQ){
+        h+=`<button class="btn btn-success" style="pointer-events:none;opacity:0.9;display:flex;align-items:center;gap:6px" disabled>✅ Submitted</button>`;
+      }
+      if(hasIndsThisQ){
+        h+=`<button class="btn btn-warn" style="display:flex;align-items:center;gap:6px" onclick="requestQuarterCorrection('${q}')">
+          🔁 Request Correction for ${q}
+        </button>`;
+      }
+      if(hasApproved){
+        h+=`<button class="btn btn-primary" style="display:flex;align-items:center;gap:6px" onclick="saveEncodeData('${q}')">
+          💾 Save Approved Corrections for ${q}
+        </button>`;
+      }
     }
-    // If approved corrections exist but encoding is now closed, show save button for those specific fields
-    if(!isOpen && hasApproved){
-      h+=`<div style="margin-top:8px"><button class="btn btn-primary" onclick="saveEncodeData('${q}')">💾 Save Approved Corrections for ${q}</button></div>`;
-    }
+
+    h+=`</div>`;
     return h;
   }
   
@@ -1199,38 +1225,54 @@ async function renderEncode(){
 async function saveEncodeData(q){
   const msg=document.getElementById('encMsg');
   msg.style.display='none';
-  
+  msg.textContent='Saving…'; msg.className='msg msg-info'; msg.style.display='block';
+
+  const isOpen=encodingControl[q]||false;
   const dataRows=[], targetRows=[], remarkRows=[];
-  
+
   ALL_INDICATORS.forEach(ind=>{
-    const allowedQs=sdoAllowedQuarters(ind);
     const corrKey=`${currentUser.username}_${q}_${ind.key}`;
     const corrApproved=correctionRequests[corrKey]?.status==='approved';
-    const isOpen=encodingControl[q]||false;
-    const isAllowed=allowedQs.includes(q);
-    // Allow saving if: encoding is open (regardless of assignment) OR correction is approved
+    // Only save if encoding is open OR this indicator has an approved correction
     if(!isOpen && !corrApproved) return;
-    
+    // Only save indicators that are assigned to this quarter (or approved correction)
+    const isAllowed=sdoAllowedQuarters(ind).includes(q);
+    if(!isAllowed && !corrApproved) return;
+
     const tEl=document.getElementById(`tgt_${q}_${ind.key}`);
     const aEl=document.getElementById(`acc_${q}_${ind.key}`);
     const rEl=document.getElementById(`rmk_${q}_${ind.key}`);
-    
-    if(tEl&&tEl.value!==''){
-      targetRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(tEl.value)||0});
+
+    // Use getAttribute('value') as fallback for disabled inputs whose .value may read as ''
+    const tRaw = tEl ? (tEl.value !== '' ? tEl.value : tEl.getAttribute('value')) : null;
+    const aRaw = aEl ? (aEl.value !== '' ? aEl.value : aEl.getAttribute('value')) : null;
+
+    if(tEl && tRaw !== null && tRaw !== ''){
+      targetRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(tRaw)||0});
     }
-    if(aEl&&aEl.value!==''){
-      dataRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(aEl.value)||0});
+    if(aEl && aRaw !== null && aRaw !== ''){
+      dataRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(aRaw)||0});
     }
-    if(rEl&&rEl.value.trim()){
+    if(rEl && rEl.value.trim()){
       remarkRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,remark_text:rEl.value.trim()});
     }
   });
-  
+
+  // If nothing to save but encoding is open, still treat as successful submission
+  // (SDO may have left all fields at 0 — still mark as submitted)
+  if(!dataRows.length && !targetRows.length && !remarkRows.length && isOpen){
+    // Insert a sentinel row so the SDO card shows "Submitted"
+    const sentinelInd = ALL_INDICATORS.find(ind => sdoAllowedQuarters(ind).includes(q));
+    if(sentinelInd){
+      dataRows.push({sdo_code:currentUser.username, quarter:q, field_key:sentinelInd.key, field_value:0});
+    }
+  }
+
   try{
     const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
-    if(dataRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data`,{method:'POST',headers,body:JSON.stringify(dataRows)});
-    if(targetRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets`,{method:'POST',headers,body:JSON.stringify(targetRows)});
-    if(remarkRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_remarks`,{method:'POST',headers,body:JSON.stringify(remarkRows)});
+    if(dataRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(dataRows)});
+    if(targetRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(targetRows)});
+    if(remarkRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_remarks?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(remarkRows)});
 
     // Mark any approved correction requests as resolved so SDO returns to read-only
     const approvedIds=ALL_INDICATORS.map(ind=>{
@@ -1257,11 +1299,15 @@ async function saveEncodeData(q){
     window._encDataMap={};(freshData||[]).forEach(r=>{window._encDataMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
     window._encTargetMap={};(freshTargets||[]).forEach(r=>{window._encTargetMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
     window._encRemarkMap={};(freshRemarks||[]).forEach(r=>{window._encRemarkMap[`${r.quarter}_${r.field_key}`]=r.remark_text;});
-    // Reload to reflect the new locked state
+    // Reload correction requests and rebuild the form (shows updated submitted state)
     await loadCorrectionRequests(currentUser.username);
-    const activeTab=document.querySelector('.q-tab.active');
-    if(activeTab) await window.switchEncodeQ(activeTab.textContent.trim());
-    setTimeout(()=>{const m2=document.getElementById('encMsg');if(m2)m2.style.display='none';},5000);
+    // Rebuild the body to show "Submitted" confirmation beside button
+    document.getElementById('encodeBody').innerHTML=buildEncodeHTML(q);
+    // Scroll the confirmation area into view
+    setTimeout(()=>{
+      const m2=document.getElementById('encMsg');
+      if(m2){m2.style.display='none';}
+    },5000);
   }catch(e){
     msg.textContent='❌ Error saving: '+e.message;
     msg.className='msg msg-error';
