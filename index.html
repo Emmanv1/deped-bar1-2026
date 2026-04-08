@@ -582,8 +582,8 @@ function renderDashPrograms(selectedQ, dataMap, roMap){
         if(selectedQ!=='ALL' && !assignedQs.includes(selectedQ)) return;
 
         // Which quarters to aggregate for accomplishment
-        const aggQs=selectedQ==='ALL'?assignedQs:[selectedQ];
-        const accomplishment=getConsolidatedAccomplishmentForQs(ind, dataMap, aggQs);
+        const aggQs=selectedQ==='ALL'?assignedQs:assignedQs.filter(q=>q===selectedQ||selectedQ==='ALL');
+        const accomplishment=getConsolidatedAccomplishment(ind, dataMap);
 
         // RO target: for multi-quarter, show the target for the selected quarter, or total
         let roTarget=0;
@@ -1105,18 +1105,17 @@ async function renderEncode(){
           const canEdit=(isOpen && isAllowedHere)||corrApproved;
           const disabledAttr=canEdit?'':'disabled';
 
-          const tVal=(window._encTargetMap||{})[`${q}_${ind.key}`]??'';
-          const aVal=(window._encDataMap||{})[`${q}_${ind.key}`]??'';
-          const rVal=(window._encRemarkMap||{})[`${q}_${ind.key}`]??'';
-          const _roMap=window._encRoMap||{};
-          const roTarget=roAssignedQs.length?(_roMap[`${q}_${ind.key}`]||''):'';
+          const tVal=targetMap[`${q}_${ind.key}`]??'';
+          const aVal=dataMap[`${q}_${ind.key}`]??'';
+          const rVal=remarkMap[`${q}_${ind.key}`]??'';
+          const roTarget=roAssignedQs.length?(roMap[`${q}_${ind.key}`]||''):'';
 
           // Build hint about reporting rule
           let hint='';
           if(!roAssignedQs.length){
             hint=`<span style="font-size:11px;color:#999">⬤ Not yet assigned by Admin</span>`;
           } else if(isAllowedHere){
-            const roTgt=_roMap[`${q}_${ind.key}`];
+            const roTgt=roMap[`${q}_${ind.key}`];
             hint=`<span style="font-size:11px;color:#2e7d32;font-weight:600">✅ Assigned to ${q} — RO Target: <strong>${roTgt!==undefined&&roTgt!==''?roTgt:'—'}</strong></span>`;
             const otherQs=roAssignedQs.filter(x=>x!==q);
             if(otherQs.length) hint+=` <span style="font-size:11px;color:var(--muted)">(Also assigned in: ${otherQs.join(', ')})</span>`;
@@ -1154,48 +1153,23 @@ async function renderEncode(){
       h+=`</div>`;
     });
     
-    // Check if this SDO has already submitted data for this quarter
-    const hasSubmittedThisQ = ALL_INDICATORS.some(ind=>{
-      return (window._encDataMap||{})[`${q}_${ind.key}`] !== undefined;
-    });
-
-    // Check for approved corrections
+    // Show Submit button when encoding is OPEN (and there are assigned indicators), OR when there's an approved correction
     const hasApproved=ALL_INDICATORS.some(ind=>{
       const ck=`${currentUser.username}_${q}_${ind.key}`;
       return correctionRequests[ck]?.status==='approved';
     });
-
-    const hasIndsThisQ=ALL_INDICATORS.some(ind=>sdoAllowedQuarters(ind).includes(q));
-
-    h+=`<div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid var(--border)">`;
-
-    if(isOpen){
-      // Show submit button (always clickable when open)
-      h+=`<button class="btn btn-success" style="font-size:14px;padding:12px 28px;display:flex;align-items:center;gap:8px" onclick="saveEncodeData('${q}')">
-        📤 Submit ${q} Data to Regional Office
-      </button>`;
-      if(hasSubmittedThisQ){
-        h+=`<span style="display:flex;align-items:center;gap:6px;color:var(--success);font-weight:700;font-size:13px">
-          ✅ ${q} data submitted to the Regional Office!
-        </span>`;
-      }
-    } else {
-      // Encoding closed — show "Submitted" badge + Request Correction button
-      if(hasSubmittedThisQ){
-        h+=`<button class="btn btn-success" style="pointer-events:none;opacity:0.9;display:flex;align-items:center;gap:6px" disabled>✅ Submitted</button>`;
-      }
-      if(hasIndsThisQ){
-        h+=`<button class="btn btn-warn" style="display:flex;align-items:center;gap:6px" onclick="requestQuarterCorrection('${q}')">
-          🔁 Request Correction for ${q}
-        </button>`;
-      }
-      if(hasApproved){
-        h+=`<button class="btn btn-primary" style="display:flex;align-items:center;gap:6px" onclick="saveEncodeData('${q}')">
-          💾 Save Approved Corrections for ${q}
-        </button>`;
-      }
+    const hasAssigned=ALL_INDICATORS.some(ind=>sdoAllowedQuarters(ind).includes(q));
+    
+    h+=`<div id="submitArea_${q}" style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid var(--border)">`;
+    if(isOpen && hasAssigned){
+      h+=`<button class="btn btn-success" style="font-size:14px;padding:12px 24px;display:inline-flex;align-items:center;gap:8px" onclick="saveEncodeData('${q}')">📤 Submit ${q} Data to Regional Office</button>`;
+    } else if(hasApproved){
+      h+=`<button class="btn btn-primary" style="font-size:14px;padding:12px 24px;display:inline-flex;align-items:center;gap:8px" onclick="saveEncodeData('${q}')">💾 Save Approved Corrections for ${q}</button>`;
+    } else if(!isOpen && hasAssigned){
+      // Already closed and presumably submitted — show static Submitted + Request Correction
+      h+=`<button class="btn btn-success" disabled style="opacity:1;cursor:default;display:inline-flex;align-items:center;gap:6px">✅ Submitted</button>`;
+      h+=`<button class="btn btn-warn" style="display:inline-flex;align-items:center;gap:6px" onclick="requestQuarterCorrection('${q}')">🔁 Request Correction for ${q}</button>`;
     }
-
     h+=`</div>`;
     return h;
   }
@@ -1212,69 +1186,59 @@ async function renderEncode(){
   
   mc.innerHTML=html;
   
-  window.switchEncodeQ=async function(q){
+  window.switchEncodeQ=function(q){
     document.querySelectorAll('.q-tab').forEach(t=>t.classList.remove('active'));
     const tab=document.getElementById(`qtab_${q}`);
     if(tab) tab.classList.add('active');
-    // Reload encoding control and correction requests fresh each time tab switches
-    await Promise.all([loadEncodingControl(), loadCorrectionRequests(currentUser.username)]);
     document.getElementById('encodeBody').innerHTML=buildEncodeHTML(q);
   };
 }
 
 async function saveEncodeData(q){
   const msg=document.getElementById('encMsg');
+  const submitBtn=document.querySelector(`[onclick="saveEncodeData('${q}')"]`);
+  if(submitBtn){submitBtn.disabled=true; submitBtn.textContent='Saving…';}
   msg.style.display='none';
-  msg.textContent='Saving…'; msg.className='msg msg-info'; msg.style.display='block';
-
-  const isOpen=encodingControl[q]||false;
+  
   const dataRows=[], targetRows=[], remarkRows=[];
-
+  
   ALL_INDICATORS.forEach(ind=>{
+    const allowedQs=sdoAllowedQuarters(ind);
     const corrKey=`${currentUser.username}_${q}_${ind.key}`;
     const corrApproved=correctionRequests[corrKey]?.status==='approved';
-    // Only save if encoding is open OR this indicator has an approved correction
-    if(!isOpen && !corrApproved) return;
-    // Only save indicators that are assigned to this quarter (or approved correction)
-    const isAllowed=sdoAllowedQuarters(ind).includes(q);
-    if(!isAllowed && !corrApproved) return;
-
+    const isOpen=encodingControl[q]||false;
+    const isAllowed=allowedQs.includes(q);
+    // Allow saving ONLY if: (encoding is open AND indicator is assigned to this quarter) OR correction is approved
+    if((!isOpen || !isAllowed) && !corrApproved) return;
+    
     const tEl=document.getElementById(`tgt_${q}_${ind.key}`);
     const aEl=document.getElementById(`acc_${q}_${ind.key}`);
     const rEl=document.getElementById(`rmk_${q}_${ind.key}`);
+    
+    // Read value even from disabled inputs (use defaultValue as fallback)
+    const tVal = tEl ? (tEl.value !== '' ? tEl.value : (tEl.defaultValue||'')) : '';
+    const aVal = aEl ? (aEl.value !== '' ? aEl.value : (aEl.defaultValue||'')) : '';
 
-    // Use getAttribute('value') as fallback for disabled inputs whose .value may read as ''
-    const tRaw = tEl ? (tEl.value !== '' ? tEl.value : tEl.getAttribute('value')) : null;
-    const aRaw = aEl ? (aEl.value !== '' ? aEl.value : aEl.getAttribute('value')) : null;
-
-    if(tEl && tRaw !== null && tRaw !== ''){
-      targetRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(tRaw)||0});
-    }
-    if(aEl && aRaw !== null && aRaw !== ''){
-      dataRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(aRaw)||0});
-    }
-    if(rEl && rEl.value.trim()){
-      remarkRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,remark_text:rEl.value.trim()});
-    }
+    if(tVal!=='') targetRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(tVal)||0});
+    if(aVal!=='') dataRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,field_value:parseFloat(aVal)||0});
+    if(rEl&&rEl.value.trim()) remarkRows.push({sdo_code:currentUser.username,quarter:q,field_key:ind.key,remark_text:rEl.value.trim()});
   });
 
-  // If nothing to save but encoding is open, still treat as successful submission
-  // (SDO may have left all fields at 0 — still mark as submitted)
-  if(!dataRows.length && !targetRows.length && !remarkRows.length && isOpen){
-    // Insert a sentinel row so the SDO card shows "Submitted"
-    const sentinelInd = ALL_INDICATORS.find(ind => sdoAllowedQuarters(ind).includes(q));
-    if(sentinelInd){
-      dataRows.push({sdo_code:currentUser.username, quarter:q, field_key:sentinelInd.key, field_value:0});
+  // If all values are 0/empty but encoding is open, push a sentinel so submission is recorded
+  if(!dataRows.length && !targetRows.length){
+    const firstAllowed=ALL_INDICATORS.find(ind=>sdoAllowedQuarters(ind).includes(q));
+    if(firstAllowed&&(encodingControl[q]||false)){
+      dataRows.push({sdo_code:currentUser.username,quarter:q,field_key:firstAllowed.key,field_value:0});
     }
   }
-
+  
   try{
     const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
     if(dataRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(dataRows)});
     if(targetRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(targetRows)});
     if(remarkRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_remarks?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(remarkRows)});
 
-    // Mark any approved correction requests as resolved so SDO returns to read-only
+    // Mark any approved correction requests as resolved
     const approvedIds=ALL_INDICATORS.map(ind=>{
       const ck=`${currentUser.username}_${q}_${ind.key}`;
       return correctionRequests[ck]?.status==='approved'?correctionRequests[ck].id:null;
@@ -1287,28 +1251,31 @@ async function saveEncodeData(q){
       });
     }
 
-    msg.textContent='✅ Data submitted to Regional Office successfully!';
-    msg.className='msg msg-success';
-    msg.style.display='block';
-    // Reload fresh data from server so UI reflects saved values
-    const [freshData, freshTargets, freshRemarks]=await Promise.all([
-      sbGet('bar1_data',`?sdo_code=eq.${currentUser.username}`),
-      sbGet('bar1_targets',`?sdo_code=eq.${currentUser.username}`),
-      sbGet('bar1_remarks',`?sdo_code=eq.${currentUser.username}`)
-    ]);
-    window._encDataMap={};(freshData||[]).forEach(r=>{window._encDataMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
-    window._encTargetMap={};(freshTargets||[]).forEach(r=>{window._encTargetMap[`${r.quarter}_${r.field_key}`]=r.field_value;});
-    window._encRemarkMap={};(freshRemarks||[]).forEach(r=>{window._encRemarkMap[`${r.quarter}_${r.field_key}`]=r.remark_text;});
-    // Reload correction requests and rebuild the form (shows updated submitted state)
+    // ── Change the button area to "Submitted + Request Correction" ──
+    const btnArea=document.getElementById(`submitArea_${q}`);
+    if(btnArea){
+      const hasAssigned=ALL_INDICATORS.some(ind=>sdoAllowedQuarters(ind).includes(q));
+      btnArea.innerHTML=`
+        <button class="btn btn-success" disabled style="opacity:1;cursor:default;display:inline-flex;align-items:center;gap:6px">
+          ✅ Submitted
+        </button>
+        ${hasAssigned?`<button class="btn btn-warn" style="display:inline-flex;align-items:center;gap:6px" onclick="requestQuarterCorrection('${q}')">
+          🔁 Request Correction for ${q}
+        </button>`:''}
+        <span style="color:var(--success);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:4px">
+          ✅ ${q} data submitted to the Regional Office!
+        </span>`;
+    } else {
+      // Fallback: show message at top
+      msg.textContent='✅ Data submitted to Regional Office successfully!';
+      msg.className='msg msg-success';
+      msg.style.display='block';
+    }
+
     await loadCorrectionRequests(currentUser.username);
-    // Rebuild the body to show "Submitted" confirmation beside button
-    document.getElementById('encodeBody').innerHTML=buildEncodeHTML(q);
-    // Scroll the confirmation area into view
-    setTimeout(()=>{
-      const m2=document.getElementById('encMsg');
-      if(m2){m2.style.display='none';}
-    },5000);
+    setTimeout(()=>{if(msg)msg.style.display='none';},5000);
   }catch(e){
+    if(submitBtn){submitBtn.disabled=false; submitBtn.textContent=`📤 Submit ${q} Data to Regional Office`;}
     msg.textContent='❌ Error saving: '+e.message;
     msg.className='msg msg-error';
     msg.style.display='block';
@@ -1325,12 +1292,17 @@ async function requestCorrection(q, fieldKey){
   });
   await loadCorrectionRequests(currentUser.username);
   const activeTab=document.querySelector('.q-tab.active');
-  if(activeTab) await window.switchEncodeQ(activeTab.textContent.trim());
+  if(activeTab) window.switchEncodeQ(activeTab.textContent.trim());
 }
 
 async function requestQuarterCorrection(q){
   const allowed=ALL_INDICATORS.filter(ind=>sdoAllowedQuarters(ind).includes(q));
   if(!allowed.length){alert('No indicators are assigned to this quarter yet.');return;}
+  
+  // Disable button immediately for feedback
+  const corrBtn=document.querySelector(`[onclick="requestQuarterCorrection('${q}')"]`);
+  if(corrBtn){corrBtn.disabled=true; corrBtn.textContent='Sending…';}
+  
   let submitted=0;
   for(const ind of allowed){
     const corrKey=`${currentUser.username}_${q}_${ind.key}`;
@@ -1344,8 +1316,19 @@ async function requestQuarterCorrection(q){
     }
   }
   await loadCorrectionRequests(currentUser.username);
-  const activeTab=document.querySelector('.q-tab.active');
-  if(activeTab) await window.switchEncodeQ(activeTab.textContent.trim());
+  
+  // Update the button area in-place to show pending state
+  const btnArea=document.getElementById(`submitArea_${q}`);
+  if(btnArea){
+    if(submitted>0){
+      btnArea.innerHTML=`
+        <button class="btn btn-success" disabled style="opacity:1;cursor:default;display:inline-flex;align-items:center;gap:6px">✅ Submitted</button>
+        <button class="btn btn-warn" disabled style="opacity:0.7;cursor:default;display:inline-flex;align-items:center;gap:6px">⏳ Correction Request: Pending Admin Approval</button>`;
+    } else {
+      if(corrBtn){corrBtn.disabled=false; corrBtn.textContent=`🔁 Request Correction for ${q}`;}
+    }
+  }
+  
   const msg=document.getElementById('encMsg');
   if(msg){
     msg.textContent=submitted>0?`✓ Correction request submitted for ${submitted} indicator(s) in ${q}. Awaiting admin approval.`:`All indicators in ${q} already have pending or approved requests.`;
@@ -1367,55 +1350,26 @@ function getConsolidatedAccomplishment(ind, allDataMap){
   if(!roQs||!roQs.length) return 0;
   const relevantQs=Q_ORDER.filter(q=>roQs.includes(q));
   
-  if(ind.type==='pct'){
-    // For percentage indicators: average across SDOs (per-SDO average across their assigned quarters, then average across SDOs)
-    let sdoAvgs=[];
-    SDO_LIST.forEach(sdo=>{
-      let sdoVals=relevantQs.map(q=>allDataMap[`${sdo}_${q}_${ind.key}`]).filter(v=>v!==undefined&&v!==null&&v!=='');
+  let total=0;
+  SDO_LIST.forEach(sdo=>{
+    if(ind.type==='pct'){
+      let sdoVals=relevantQs.map(q=>allDataMap[`${sdo}_${q}_${ind.key}`]).filter(v=>v!==undefined&&v!==null);
       if(sdoVals.length>0){
-        sdoAvgs.push(sdoVals.reduce((a,b)=>a+Number(b),0)/sdoVals.length);
+        total+=sdoVals.reduce((a,b)=>a+Number(b),0)/sdoVals.length;
       }
-    });
-    if(!sdoAvgs.length) return 0;
-    return Math.round(sdoAvgs.reduce((a,b)=>a+b,0)/sdoAvgs.length*100)/100;
-  } else {
-    // For count indicators: SUM across all SDOs and all assigned quarters
-    let total=0;
-    SDO_LIST.forEach(sdo=>{
+    } else {
       relevantQs.forEach(q=>{
         const v=allDataMap[`${sdo}_${q}_${ind.key}`];
-        if(v!==undefined&&v!==null&&v!=='') total+=Number(v);
+        if(v!==undefined&&v!==null) total+=Number(v);
       });
-    });
-    return Math.round(total*100)/100;
-  }
+    }
+  });
+  return Math.round(total*100)/100;
 }
 
-// Same as above but for a specific set of quarters (used by dashboard quarter filter)
-function getConsolidatedAccomplishmentForQs(ind, allDataMap, relevantQs){
-  if(!relevantQs||!relevantQs.length) return 0;
-  if(ind.type==='pct'){
-    let sdoAvgs=[];
-    SDO_LIST.forEach(sdo=>{
-      let sdoVals=relevantQs.map(q=>allDataMap[`${sdo}_${q}_${ind.key}`]).filter(v=>v!==undefined&&v!==null&&v!=='');
-      if(sdoVals.length>0){
-        sdoAvgs.push(sdoVals.reduce((a,b)=>a+Number(b),0)/sdoVals.length);
-      }
-    });
-    if(!sdoAvgs.length) return 0;
-    return Math.round(sdoAvgs.reduce((a,b)=>a+b,0)/sdoAvgs.length*100)/100;
-  } else {
-    let total=0;
-    SDO_LIST.forEach(sdo=>{
-      relevantQs.forEach(q=>{
-        const v=allDataMap[`${sdo}_${q}_${ind.key}`];
-        if(v!==undefined&&v!==null&&v!=='') total+=Number(v);
-      });
-    });
-    return Math.round(total*100)/100;
-  }
-}
-
+// ============================================================
+// PAGE: MY SUMMARY (SDO)
+// ============================================================
 async function renderMySummary(){
   const mc=document.getElementById('mainContent');
   mc.innerHTML=`<div class="page-title">📊 My Summary</div><div class="loading">Loading…</div>`;
@@ -1543,7 +1497,7 @@ async function renderRegional(){
     <table><thead><tr><th>Indicator</th><th>RO Target (${q})</th><th>Consolidated Accomplishment</th><th>Status</th></tr></thead><tbody>`;
     indsForQ.forEach(ind=>{
       const roT=roMap[`${q}_${ind.key}`]||0;
-      const consolidated=getConsolidatedAccomplishmentForQs(ind, dataMap, [q]);
+      const consolidated=getConsolidatedAccomplishment(ind, dataMap);
       const met=consolidated>=roT&&roT>0;
       html+=`<tr><td style="font-size:12px">${ind.label}</td><td>${roT||'—'}</td><td style="font-weight:700">${consolidated||'—'}</td><td>${roT>0?`<span class="badge ${met?'badge-met':'badge-below'}">${met?'MET':'BELOW'}</span>`:'—'}</td></tr>`;
     });
@@ -1662,7 +1616,7 @@ async function renderConsolidated(){
             const v=dataMap[`${sdo}_${q}_${ind.key}`];
             return (v!==undefined&&v!==null)?Number(v):null;
           });
-          const consolidated=getConsolidatedAccomplishmentForQs(ind, dataMap, [q]);
+          const consolidated=getConsolidatedAccomplishment(ind, dataMap);
           const met=consolidated>=(roT||0)&&(roT||0)>0;
           h+=`<tr>
             <td style="font-size:12px">${ind.label}</td>
@@ -1769,7 +1723,7 @@ async function renderSubmissions(){
   window.saveAdminEdit=async function(sdo){
     const msg=document.getElementById('adminEditMsg');
     msg.textContent='Saving…'; msg.className='msg msg-info'; msg.style.display='block';
-    const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+    const headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'};
     const dRows=[],tRows=[];
     ['Q1','Q2','Q3','Q4'].forEach(q=>{
       ALL_INDICATORS.forEach(ind=>{
@@ -1780,24 +1734,10 @@ async function renderSubmissions(){
       });
     });
     try{
+      // Use on_conflict in URL so Supabase actually upserts (updates existing rows)
       if(tRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(tRows)});
       if(dRows.length) await fetch(`${SUPABASE_URL}/rest/v1/bar1_data?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers,body:JSON.stringify(dRows)});
       msg.textContent='✓ Changes saved successfully!'; msg.className='msg msg-success';
-      // Refresh the SDO card list to reflect updated submission status
-      const sdoGrid=document.querySelector('.sdo-grid');
-      if(sdoGrid){
-        const allDataRefresh=await sbGet('bar1_data');
-        const submittedRefresh={};
-        (allDataRefresh||[]).forEach(r=>{if(!submittedRefresh[r.sdo_code])submittedRefresh[r.sdo_code]=new Set();submittedRefresh[r.sdo_code].add(r.quarter);});
-        SDO_LIST.forEach(s=>{
-          const card=sdoGrid.querySelector(`[onclick="viewSDO('${s}')"]`);
-          if(!card) return;
-          const qs=[...((submittedRefresh[s]||new Set()))].sort().join(', ');
-          const hasData=submittedRefresh[s]&&submittedRefresh[s].size>0;
-          card.className=`sdo-card ${hasData?'has-data':''}`;
-          card.querySelector('p').textContent=hasData?'Submitted: '+qs:'No data submitted yet';
-        });
-      }
       setTimeout(()=>msg.style.display='none',4000);
     }catch(e){
       msg.textContent='❌ Error: '+e.message; msg.className='msg msg-error';
