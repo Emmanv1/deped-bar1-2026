@@ -582,8 +582,8 @@ function renderDashPrograms(selectedQ, dataMap, roMap){
         if(selectedQ!=='ALL' && !assignedQs.includes(selectedQ)) return;
 
         // Which quarters to aggregate for accomplishment
-        const aggQs=selectedQ==='ALL'?assignedQs:assignedQs.filter(q=>q===selectedQ||selectedQ==='ALL');
-        const accomplishment=getConsolidatedAccomplishment(ind, dataMap);
+        const aggQs=selectedQ==='ALL'?assignedQs:[selectedQ];
+        const accomplishment=getConsolidatedAccomplishmentForQs(ind, dataMap, aggQs);
 
         // RO target: for multi-quarter, show the target for the selected quarter, or total
         let roTarget=0;
@@ -1341,30 +1341,42 @@ async function requestQuarterCorrection(q){
 // ============================================================
 // CUMULATIVE AGGREGATION HELPER
 // ============================================================
-// For a given indicator and all RO-assigned reporting quarters,
-// aggregate all SDO accomplishments across those quarters.
-// - Percentage indicators (type='pct'): AVERAGE across all assigned quarters with data
-// - Count indicators (type='num'): SUM across all assigned quarters with data
+// - Percentage indicators (type='pct'): AVERAGE across SDOs that have submitted data
+// - Count indicators (type='num'): SUM across all SDOs and assigned quarters
 function getConsolidatedAccomplishment(ind, allDataMap){
-  const roQs=quarterAssignments[ind.key];
-  if(!roQs||!roQs.length) return 0;
-  const relevantQs=Q_ORDER.filter(q=>roQs.includes(q));
-  
-  let total=0;
-  SDO_LIST.forEach(sdo=>{
-    if(ind.type==='pct'){
-      let sdoVals=relevantQs.map(q=>allDataMap[`${sdo}_${q}_${ind.key}`]).filter(v=>v!==undefined&&v!==null);
-      if(sdoVals.length>0){
-        total+=sdoVals.reduce((a,b)=>a+Number(b),0)/sdoVals.length;
+  return getConsolidatedAccomplishmentForQs(ind, allDataMap, Q_ORDER.filter(q=>(quarterAssignments[ind.key]||[]).includes(q)));
+}
+
+// Same logic but for a specific set of quarters (used by dashboard quarter filter & consolidated table)
+function getConsolidatedAccomplishmentForQs(ind, allDataMap, relevantQs){
+  if(!relevantQs||!relevantQs.length) return 0;
+
+  if(ind.type==='pct'){
+    // For each SDO: average their values across the relevant quarters they submitted
+    // Then average THOSE per-SDO averages across all SDOs that submitted
+    const sdoAvgs=[];
+    SDO_LIST.forEach(sdo=>{
+      const vals=relevantQs
+        .map(q=>allDataMap[`${sdo}_${q}_${ind.key}`])
+        .filter(v=>v!==undefined&&v!==null&&v!=='');
+      if(vals.length>0){
+        sdoAvgs.push(vals.reduce((a,b)=>a+Number(b),0)/vals.length);
       }
-    } else {
+    });
+    if(!sdoAvgs.length) return 0;
+    return Math.round(sdoAvgs.reduce((a,b)=>a+b,0)/sdoAvgs.length*100)/100;
+
+  } else {
+    // Count indicators: SUM across all SDOs and all relevant quarters
+    let total=0;
+    SDO_LIST.forEach(sdo=>{
       relevantQs.forEach(q=>{
         const v=allDataMap[`${sdo}_${q}_${ind.key}`];
-        if(v!==undefined&&v!==null) total+=Number(v);
+        if(v!==undefined&&v!==null&&v!=='') total+=Number(v);
       });
-    }
-  });
-  return Math.round(total*100)/100;
+    });
+    return Math.round(total*100)/100;
+  }
 }
 
 // ============================================================
@@ -1497,7 +1509,7 @@ async function renderRegional(){
     <table><thead><tr><th>Indicator</th><th>RO Target (${q})</th><th>Consolidated Accomplishment</th><th>Status</th></tr></thead><tbody>`;
     indsForQ.forEach(ind=>{
       const roT=roMap[`${q}_${ind.key}`]||0;
-      const consolidated=getConsolidatedAccomplishment(ind, dataMap);
+      const consolidated=getConsolidatedAccomplishmentForQs(ind, dataMap, [q]);
       const met=consolidated>=roT&&roT>0;
       html+=`<tr><td style="font-size:12px">${ind.label}</td><td>${roT||'—'}</td><td style="font-weight:700">${consolidated||'—'}</td><td>${roT>0?`<span class="badge ${met?'badge-met':'badge-below'}">${met?'MET':'BELOW'}</span>`:'—'}</td></tr>`;
     });
@@ -1616,7 +1628,7 @@ async function renderConsolidated(){
             const v=dataMap[`${sdo}_${q}_${ind.key}`];
             return (v!==undefined&&v!==null)?Number(v):null;
           });
-          const consolidated=getConsolidatedAccomplishment(ind, dataMap);
+          const consolidated=getConsolidatedAccomplishmentForQs(ind, dataMap, [q]);
           const met=consolidated>=(roT||0)&&(roT||0)>0;
           h+=`<tr>
             <td style="font-size:12px">${ind.label}</td>
