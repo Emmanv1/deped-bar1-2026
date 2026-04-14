@@ -916,15 +916,25 @@ async function renderPDFCtrl(){
   });
   html+=`</div>`;
 
-  // Show all uploaded PDFs
-  const uploads=await sbGet('bar1_uploads');
-  html+=`<div class="card"><h3>Uploaded PDFs</h3>`;
+  // Show all uploaded PDFs — newest first
+  const uploads=await sbGet('bar1_uploads','?order=uploaded_at.desc');
+  html+=`<div class="card">
+    <h3 style="display:flex;align-items:center;justify-content:space-between">
+      <span>Uploaded PDFs</span>
+      <button class="btn btn-primary btn-sm" onclick="renderPDFCtrl()" style="font-size:12px">🔄 Refresh</button>
+    </h3>`;
   if(!uploads||!uploads.length){html+=`<div class="empty">No PDFs uploaded yet.</div>`;}
   else{
-    html+=`<table><thead><tr><th>SDO</th><th>Quarter</th><th>Filename</th><th>Uploaded</th></tr></thead><tbody>`;
+    html+=`<table><thead><tr><th>SDO</th><th>Quarter</th><th>Filename</th><th>Uploaded</th><th>View</th></tr></thead><tbody>`;
     uploads.forEach(u=>{
       const pubUrl=`${SUPABASE_URL}/storage/v1/object/public/bar1-uploads/${u.file_path}`;
-      html+=`<tr><td>${ACCOUNTS[u.sdo_code]?.name||u.sdo_code}</td><td>${u.quarter}</td><td><a href="${pubUrl}" target="_blank" style="color:var(--primary)">${u.file_name}</a></td><td>${new Date(u.uploaded_at).toLocaleDateString()}</td></tr>`;
+      html+=`<tr>
+        <td style="font-weight:600">${ACCOUNTS[u.sdo_code]?.name||u.sdo_code}</td>
+        <td>${u.quarter}</td>
+        <td style="font-size:12px">${u.file_name}</td>
+        <td style="font-size:12px">${new Date(u.uploaded_at).toLocaleString()}</td>
+        <td><a href="${pubUrl}" target="_blank" class="btn btn-primary btn-sm" style="font-size:11px;padding:3px 10px">Open PDF</a></td>
+      </tr>`;
     });
     html+=`</tbody></table>`;
   }
@@ -1557,22 +1567,57 @@ async function uploadPDF(q){
   if(!fileInput.files.length){alert('Please select a PDF file.');return;}
   msg.textContent='Uploading…';msg.className='msg msg-info';msg.style.display='block';
   
+  let uploadedCount=0;
+  let errorMsg='';
+
   for(const file of fileInput.files){
     const path=`${currentUser.username}/${q}/${Date.now()}_${file.name}`;
-    const r=await fetch(`${SUPABASE_URL}/storage/v1/object/bar1-uploads/${path}`,{
+    
+    // Step 1: Upload file to Supabase Storage
+    const storageRes=await fetch(`${SUPABASE_URL}/storage/v1/object/bar1-uploads/${path}`,{
       method:'POST',
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/pdf'},
       body:file
     });
-    if(r.ok){
-      await fetch(`${SUPABASE_URL}/rest/v1/bar1_uploads`,{
-        method:'POST',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
-        body:JSON.stringify({sdo_code:currentUser.username,quarter:q,file_name:file.name,file_path:path})
-      });
+
+    if(!storageRes.ok){
+      const errBody=await storageRes.text();
+      errorMsg=`Storage upload failed for "${file.name}": ${errBody}`;
+      continue;
+    }
+
+    // Step 2: Record the upload in the database
+    const dbRes=await fetch(`${SUPABASE_URL}/rest/v1/bar1_uploads`,{
+      method:'POST',
+      headers:{
+        'apikey':SUPABASE_KEY,
+        'Authorization':'Bearer '+SUPABASE_KEY,
+        'Content-Type':'application/json',
+        'Prefer':'return=representation'
+      },
+      body:JSON.stringify({sdo_code:currentUser.username,quarter:q,file_name:file.name,file_path:path})
+    });
+
+    if(dbRes.ok||dbRes.status===201||dbRes.status===200){
+      uploadedCount++;
+    } else {
+      const errBody=await dbRes.text();
+      // Storage succeeded but DB failed — log actual error
+      errorMsg=`File uploaded to storage but could not be recorded (DB error ${dbRes.status}): ${errBody}`;
     }
   }
-  msg.textContent='✓ PDF(s) uploaded successfully!';msg.className='msg msg-success';
+
+  if(uploadedCount>0 && !errorMsg){
+    msg.textContent=`✓ ${uploadedCount} PDF(s) uploaded and recorded successfully!`;
+    msg.className='msg msg-success';
+  } else if(uploadedCount>0 && errorMsg){
+    msg.textContent=`⚠️ ${uploadedCount} file(s) uploaded to storage but database record failed. Contact admin. Error: ${errorMsg}`;
+    msg.className='msg msg-error';
+  } else {
+    msg.textContent=`❌ Upload failed. ${errorMsg}`;
+    msg.className='msg msg-error';
+  }
+  msg.style.display='block';
 }
 
 // ============================================================
