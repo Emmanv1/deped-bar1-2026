@@ -776,11 +776,13 @@ function calcROTotal(ind, assignedQs, qVals){
 
 async function saveROTargets(){
   const msg=document.getElementById('roMsg');
-  msg.style.display='none';
-  
+  msg.style.display='block';
+  msg.className='msg msg-info';
+  msg.textContent='⏳ Saving targets and assignments... please wait.';
+
   const upsertData=[];
   const assignData=[];
-  
+
   ALL_INDICATORS.forEach(ind=>{
     ['Q1','Q2','Q3','Q4'].forEach(q=>{
       const chkEl=document.getElementById(`qchk_${ind.key}_${q}`);
@@ -788,44 +790,90 @@ async function saveROTargets(){
       if(!chkEl||!valEl) return;
       if(chkEl.checked){
         assignData.push({indicator_key:ind.key, quarter:q});
-        // Always save even if 0 — admin has full control
         const val=valEl.value===''?0:parseFloat(valEl.value)||0;
         upsertData.push({sdo_code:'RO', quarter:q, field_key:ind.key, field_value:val});
       }
     });
   });
 
-  try{
-    const hdr={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'};
+  if(upsertData.length===0 && assignData.length===0){
+    msg.textContent='⚠️ No quarters checked. Please check at least one quarter per indicator before saving.';
+    msg.className='msg msg-error';
+    return;
+  }
 
-    // DELETE all existing RO targets first
-    await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?sdo_code=eq.RO`,{
+  const hdr={
+    'apikey':SUPABASE_KEY,
+    'Authorization':'Bearer '+SUPABASE_KEY,
+    'Content-Type':'application/json',
+    'Prefer':'resolution=merge-duplicates,return=minimal'
+  };
+
+  try{
+    // STEP 1: UPSERT new RO targets FIRST (safe — does not delete anything)
+    if(upsertData.length>0){
+      const r1=await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets`,{
+        method:'POST', headers:hdr, body:JSON.stringify(upsertData)
+      });
+      if(!r1.ok){
+        const errText=await r1.text();
+        throw new Error('Failed to save RO targets: '+errText);
+      }
+    }
+
+    // STEP 2: Delete old quarter assignments
+    const r2=await fetch(`${SUPABASE_URL}/rest/v1/bar1_quarter_assignments?indicator_key=not.eq.__none__`,{
       method:'DELETE',
       headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
     });
+    if(!r2.ok && r2.status!==204){
+      const errText=await r2.text();
+      throw new Error('Failed to clear old quarter assignments: '+errText);
+    }
 
-    // Delete all existing quarter assignments
-    await sbDelete('bar1_quarter_assignments','?indicator_key=not.eq.__none__');
-    
-    // Insert new assignments (multi-quarter per indicator)
+    // STEP 3: Insert new quarter assignments
     if(assignData.length>0){
-      await fetch(`${SUPABASE_URL}/rest/v1/bar1_quarter_assignments`,{method:'POST',headers:hdr,body:JSON.stringify(assignData)});
+      const r3=await fetch(`${SUPABASE_URL}/rest/v1/bar1_quarter_assignments`,{
+        method:'POST', headers:hdr, body:JSON.stringify(assignData)
+      });
+      if(!r3.ok){
+        const errText=await r3.text();
+        throw new Error('Failed to save quarter assignments: '+errText);
+      }
     }
-    
-    // Insert fresh targets
-    if(upsertData.length>0){
-      await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?on_conflict=sdo_code,quarter,field_key`,{method:'POST',headers:hdr,body:JSON.stringify(upsertData)});
+
+    // STEP 4: Delete RO target rows for unchecked quarters (clean up deselected ones)
+    const checkedKeys=new Set(upsertData.map(r=>`${r.quarter}__${r.field_key}`));
+    const allPossible=[];
+    ALL_INDICATORS.forEach(ind=>{
+      ['Q1','Q2','Q3','Q4'].forEach(q=>{
+        if(!checkedKeys.has(`${q}__${ind.key}`)){
+          allPossible.push(`(sdo_code.eq.RO,quarter.eq.${q},field_key.eq.${ind.key})`);
+        }
+      });
+    });
+    // Only delete in small batches to avoid URL length issues
+    if(allPossible.length>0){
+      for(let i=0;i<allPossible.length;i+=20){
+        const batch=allPossible.slice(i,i+20);
+        await fetch(`${SUPABASE_URL}/rest/v1/bar1_targets?or=(${batch.join(',')})`,{
+          method:'DELETE',
+          headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+        });
+      }
     }
-    
+
     await loadQuarterAssignments();
-    msg.textContent='✓ Targets and quarter assignments saved successfully!';
+    msg.textContent=`✓ Saved successfully! ${upsertData.length} target values and ${assignData.length} quarter assignments stored in cloud.`;
     msg.className='msg msg-success';
     msg.style.display='block';
-    setTimeout(()=>msg.style.display='none',4000);
+    setTimeout(()=>msg.style.display='none',6000);
+
   }catch(e){
-    msg.textContent='❌ Error saving: '+e.message;
+    msg.textContent='❌ Error: '+e.message+' — Your previous data was NOT deleted. Please try again.';
     msg.className='msg msg-error';
     msg.style.display='block';
+    console.error('saveROTargets error:',e);
   }
 }
 
